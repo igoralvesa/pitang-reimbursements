@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  COLLABORATOR
+  MANAGER
+  FINANCE
+  ADMIN
+}
+
+enum ReimbursementStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+  CANCELED
+}
+
+enum ReimbursementHistoryAction {
+  CREATED
+  UPDATED
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+  CANCELED
+}
+
+model User {
+  id           String                 @id @default(uuid()) @db.Uuid
+  name         String
+  email        String                 @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  requests     ReimbursementRequest[]
+  histories    ReimbursementHistory[]
+}
+
+model Category {
+  id        String                 @id @default(uuid()) @db.Uuid
+  name      String
+  active    Boolean                @default(true)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  requests  ReimbursementRequest[]
+}
+
+model ReimbursementRequest {
+  id              String                 @id @default(uuid()) @db.Uuid
+  requesterId     String                 @db.Uuid
+  categoryId      String                 @db.Uuid
+  description     String
+  amount          Decimal
+  expenseDate     DateTime
+  status          ReimbursementStatus    @default(DRAFT)
+  rejectionReason String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  requester       User                   @relation(fields: [requesterId], references: [id])
+  category        Category               @relation(fields: [categoryId], references: [id])
+  attachments     Attachment[]
+  histories       ReimbursementHistory[]
+
+  @@index([requesterId])
+  @@index([categoryId])
+  @@index([status])
+}
+
+model Attachment {
+  id                     String               @id @default(uuid()) @db.Uuid
+  reimbursementRequestId String               @db.Uuid
+  fileName               String
+  fileUrl                String
+  fileType               String
+  publicId               String?
+  size                   Int?
+  createdAt              DateTime             @default(now())
+  reimbursementRequest   ReimbursementRequest @relation(fields: [reimbursementRequestId], references: [id])
+
+  @@index([reimbursementRequestId])
+}
+
+model ReimbursementHistory {
+  id                     String                     @id @default(uuid()) @db.Uuid
+  reimbursementRequestId String                     @db.Uuid
+  userId                 String                     @db.Uuid
+  action                 ReimbursementHistoryAction
+  observation            String
+  createdAt              DateTime                   @default(now())
+  reimbursementRequest   ReimbursementRequest       @relation(fields: [reimbursementRequestId], references: [id])
+  user                   User                       @relation(fields: [userId], references: [id])
+
+  @@index([reimbursementRequestId])
+  @@index([userId])
+}
