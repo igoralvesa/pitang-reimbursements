@@ -1,0 +1,15 @@
+# Pitang Reimbursements
+
+## Postman
+
+To test the API in Postman:
+
+1. Import `postman/reimbursement-api.postman_collection.json`.
+2. Import `postman/reimbursement-api.postman_environment.json`.
+3. Select the `Reimbursement API` environment in Postman.
+4. Run `Auth > Login` first. The test script stores the returned JWT in `{{token}}`.
+5. Test the protected routes normally.
+
+The current collection includes the routes that exist in the legacy Postman files and mounted backend routes: health, auth and users. Categories, reimbursements, attachments and history should be added to the collection when those API routes are implemented.
+
+The legacy individual request files were moved to `postman/legacy/`.

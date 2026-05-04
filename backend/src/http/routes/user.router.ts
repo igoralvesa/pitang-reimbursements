@@ -9,13 +9,15 @@ import {
   postUser,
 } from '../controllers/users';
 
+const authRouter = express.Router();
 const userRouter = express.Router();
 
-userRouter.post('/auth/login', login);
+authRouter.post('/auth/login', login);
+
+userRouter.post('/users', postUser);
 userRouter.get('/users', getUsers);
 userRouter.get('/users/:id', getUser);
-userRouter.post('/users', postUser);
 userRouter.patch('/users/:id', patchUser);
 userRouter.delete('/users/:id', deleteUser);
 
-export default userRouter;
+export { authRouter, userRouter };

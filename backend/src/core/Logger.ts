@@ -1,4 +1,7 @@
 import pino from 'pino';
+import { mkdirSync } from 'node:fs';
+
+mkdirSync('logs', { recursive: true });
 
 function createTransport(loggerName: string) {
   return pino.transport({
@@ -8,7 +11,6 @@ function createTransport(loggerName: string) {
         options: { destination: `logs/${loggerName}.log` },
         target: 'pino/file',
       },
-      { level: 'info', options: {}, target: 'pino-pretty' },
     ],
   });
 }

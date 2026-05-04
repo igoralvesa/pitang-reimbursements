@@ -3,7 +3,10 @@ import z from 'zod';
 const environmentSchema = z.object({
   DATABASE_URL: z
     .string()
-    .startsWith('postgres://', 'Postgres connection URL is not defined'),
+    .regex(
+      /^postgres(ql)?:\/\//,
+      'Postgres connection URL is not defined',
+    ),
 
   FRONTEND_URL: z.string().default('http://localhost:3000'),
 
@@ -13,7 +16,7 @@ const environmentSchema = z.object({
 
   NODE_ENV: z.string().default('development'),
 
-  REDIS_URL: z.string(),
+  REDIS_URL: z.string().optional(),
   SMTP_AUTH_PASSWORD: z.string().optional(),
   SMTP_AUTH_USER: z.string().optional(),
   SMTP_HOST: z.string().optional(),

@@ -5,32 +5,11 @@ import type { AuthenticatedUser } from '../../types/authenticated-user';
 
 import type { NextFunction, Request, Response } from 'express';
 
-const allowedPaths = {
-  GET: ['/'],
-  POST: ['/auth/login', '/users'],
-  PUT: [],
-} as const;
-
-function matchPath(path: string, pattern: string): boolean {
-  if (pattern.endsWith('/*')) {
-    const prefix = pattern.slice(0, -1);
-    return path.startsWith(prefix);
-  }
-
-  return path === pattern;
-}
-
 export function authMiddleware(
   request: Request,
   response: Response,
   next: NextFunction,
 ) {
-  const paths = allowedPaths[request.method as keyof typeof allowedPaths] ?? [];
-
-  if (paths.some((path) => matchPath(request.path, path))) {
-    return next();
-  }
-
   const {
     headers: { authorization },
   } = request;
