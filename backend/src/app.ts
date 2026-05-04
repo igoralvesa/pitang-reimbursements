@@ -3,7 +3,8 @@ import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { authMiddleware } from './http/middlewares/auth.middleware';
-import { authRouter, userRouter } from './http/routes/user.router';
+import userRouter from './http/routes/user.router';
+import authRouter from './http/routes/auth.router';
 
 const app = express();
 
