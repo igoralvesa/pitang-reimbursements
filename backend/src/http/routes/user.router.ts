@@ -1,4 +1,5 @@
 import express from 'express';
+import { requireRole } from '../middlewares/require-role.middleware';
 
 import {
   deleteUser,
@@ -9,11 +10,12 @@ import {
 } from '../controllers/users';
 
 const userRouter = express.Router();
+const requireAdmin = requireRole('ADMIN');
 
-userRouter.post('/users', postUser);
-userRouter.get('/users', getUsers);
-userRouter.get('/users/:id', getUser);
-userRouter.patch('/users/:id', patchUser);
-userRouter.delete('/users/:id', deleteUser);
+userRouter.post('/', requireAdmin, postUser);
+userRouter.get('/', requireAdmin, getUsers);
+userRouter.get('/:id', requireAdmin, getUser);
+userRouter.patch('/:id', requireAdmin, patchUser);
+userRouter.delete('/:id', requireAdmin, deleteUser);
 
 export default userRouter;

@@ -10,6 +10,11 @@ export async function postUser(request: Request, response: Response) {
   const { data, error } = userSchema.safeParse(request.body);
 
   if (error) {
+    logger.warn(
+      { fields: Object.keys(z.treeifyError(error).properties ?? {}) },
+      'Dados inválidos para criação de usuário',
+    );
+
     return response.status(400).json(z.treeifyError(error).properties);
   }
 
@@ -33,9 +38,16 @@ export async function postUser(request: Request, response: Response) {
     },
   });
 
-  logger.info(user, 'Usuário cadastrado');
-
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
+
+  logger.info(
+    {
+      email: userWithoutPassword.email,
+      role: userWithoutPassword.role,
+      userId: userWithoutPassword.id,
+    },
+    'Usuário cadastrado',
+  );
 
   response.status(201).json(userWithoutPassword);
 }

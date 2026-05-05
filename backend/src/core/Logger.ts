@@ -18,12 +18,9 @@ function createTransport(loggerName: string) {
 export const logger = pino(
   {
     msgPrefix: '[SERVER] ',
-    redact: { paths: ['password', 'verificationToken'] },
+    redact: {
+      paths: ['password', 'passwordHash', 'token', 'verificationToken'],
+    },
   },
   createTransport('app'),
-);
-
-export const loggerWorker = pino(
-  { msgPrefix: '[WORKER] ' },
-  createTransport('worker'),
 );

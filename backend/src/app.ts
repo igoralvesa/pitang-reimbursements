@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { logger } from './core/Logger';
 import { authMiddleware } from './http/middlewares/auth.middleware';
 import userRouter from './http/routes/user.router';
 import authRouter from './http/routes/auth.router';
@@ -21,14 +22,16 @@ app.use(morgan('dev'));
 app.use(helmet());
 
 app.get('/', (request, response) => {
+  logger.info('Health check acessado');
+
   response.send({ message: 'Hello world' });
 });
 
-app.use(authRouter);
+app.use('/auth', authRouter);
 
 app.use(authMiddleware);
 
-app.use(userRouter);
+app.use('/users', userRouter);
 // app.use('/api', postRouter);
 
 // app.use(errorFallbackMiddleware);

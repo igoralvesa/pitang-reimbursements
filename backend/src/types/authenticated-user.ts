@@ -1,5 +1,5 @@
 export type AuthenticatedUser = {
   id: string;
   email: string;
-  role: 'ADMIN' | 'COLABORADOR' | 'GESTOR' | 'FINANCEIRO';
+  role: 'ADMIN' | 'COLLABORATOR' | 'MANAGER' | 'FINANCE';
 };
