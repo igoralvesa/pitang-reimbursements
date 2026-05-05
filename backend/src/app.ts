@@ -6,6 +6,7 @@ import { logger } from './core/Logger';
 import { authMiddleware } from './http/middlewares/auth.middleware';
 import userRouter from './http/routes/user.router';
 import authRouter from './http/routes/auth.router';
+import categoryRouter from './http/routes/category.router';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/auth', authRouter);
 app.use(authMiddleware);
 
 app.use('/users', userRouter);
+app.use('/categories', categoryRouter);
 // app.use('/api', postRouter);
 
 // app.use(errorFallbackMiddleware);
