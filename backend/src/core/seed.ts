@@ -2,27 +2,28 @@ import bcrypt from 'bcryptjs';
 
 import { logger } from './Logger';
 import { prisma } from './prisma';
+import { Role } from '../types/roles-enum';
 
 const seedUsers = [
   {
     email: 'admin@email.com',
     name: 'Admin',
-    role: 'ADMIN',
+    role: Role.ADMIN,
   },
   {
     email: 'colaborador@email.com',
     name: 'Colaborador',
-    role: 'COLLABORATOR',
+    role: Role.COLLABORATOR,
   },
   {
     email: 'gestor@email.com',
     name: 'Gestor',
-    role: 'MANAGER',
+    role: Role.MANAGER,
   },
   {
     email: 'financeiro@email.com',
     name: 'Financeiro',
-    role: 'FINANCE',
+    role: Role.FINANCE,
   },
 ] as const;
 

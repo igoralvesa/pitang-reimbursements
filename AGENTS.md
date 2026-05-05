@@ -218,6 +218,30 @@ Required history actions to test when implemented:
 
 The goal is not to create tests only for schemas or endpoints mechanically. The goal is to test the behavior expected by the business rule, including validation, permissions, status transitions, and side effects.
 
+## Reimbursement History
+
+Every relevant action on a reimbursement request must create a history record.
+
+A history record must store:
+
+- `reimbursementId`
+- `userId` of the logged-in user who performed the action
+- `action`
+- `observation`
+- `createdAt`
+
+Required history actions:
+
+- `CREATED`: when a reimbursement is created
+- `UPDATED`: when a draft reimbursement is edited
+- `SUBMITTED`: when a reimbursement is submitted for review
+- `APPROVED`: when a manager approves it
+- `REJECTED`: when a manager rejects it
+- `PAID`: when finance marks it as paid
+- `CANCELED`: when the owner cancels it
+
+History is an audit trail. Do not change or delete history records after creation.
+
 ## Style
 
 Keep the implementation simple and readable.

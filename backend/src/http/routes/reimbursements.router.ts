@@ -1,31 +1,87 @@
 import express from 'express';
+import { Role } from '../../types/roles-enum';
 import { requireRole } from '../middlewares/require-role.middleware';
 
 import {
-  deleteUser,
-  getUser,
-  getUsers,
-  patchUser,
-  postUser,
-  promoteUser,
-} from '../controllers/reimbursement';
+  getReimbursement,
+  getReimbursements,
+  updateReimbursement,
+  postReimbursement,
+  submitReimbursement,
+  approveReimbursement,
+  rejectReimbursement,
+  payReimbursement,
+  getReimbursementHistory,
+  uploadReimbursementAttachments,
+  getReimbursementAttachments,
+} from '../controllers/reimbursements';
 
 const reimbursementRouter = express.Router();
 
-reimbursementRouter.get('/', requireRole('ADMIN'), postUser);
+reimbursementRouter.get(
+  '/',
+  requireRole(Role.ADMIN, Role.COLLABORATOR, Role.MANAGER, Role.FINANCE),
+  getReimbursements,
+);
+
 reimbursementRouter.post(
   '/',
-  requireRole('ADMIN', 'COLLABORATOR'),
-  promoteUser,
+  requireRole(Role.COLLABORATOR),
+  postReimbursement,
 );
-reimbursementRouter.get('/:id', requireRole('ADMIN'), getUsers);
-reimbursementRouter.put('/:id', requireRole('ADMIN'), getUser);
-reimbursementRouter.post('/:id/submit', requireRole('ADMIN'), patchUser);
-reimbursementRouter.post('/:id/approve', requireRole('ADMIN'), deleteUser);
-reimbursementRouter.post('/:id/reject', requireRole('ADMIN'), deleteUser);
-reimbursementRouter.post('/:id/pay', requireRole('ADMIN'), deleteUser);
-reimbursementRouter.get('/:id/history', requireRole('ADMIN'), deleteUser);
-reimbursementRouter.post('/:id/attachments', requireRole('ADMIN'), deleteUser);
-reimbursementRouter.get('/:id/attachments', requireRole('ADMIN'), deleteUser);
+
+reimbursementRouter.get(
+  '/:id',
+  requireRole(Role.ADMIN, Role.COLLABORATOR, Role.MANAGER, Role.FINANCE),
+  getReimbursement,
+);
+
+reimbursementRouter.put(
+  '/:id',
+  requireRole(Role.COLLABORATOR),
+  updateReimbursement,
+);
+
+reimbursementRouter.post(
+  '/:id/submit',
+  requireRole(Role.COLLABORATOR),
+  submitReimbursement,
+);
+
+reimbursementRouter.post(
+  '/:id/approve',
+  requireRole(Role.MANAGER),
+  approveReimbursement,
+);
+
+reimbursementRouter.post(
+  '/:id/reject',
+  requireRole(Role.MANAGER),
+  rejectReimbursement,
+);
+
+reimbursementRouter.post(
+  '/:id/pay',
+  requireRole(Role.FINANCE),
+  payReimbursement,
+);
+
+reimbursementRouter.get(
+  '/:id/history',
+  requireRole(Role.ADMIN, Role.COLLABORATOR, Role.MANAGER, Role.FINANCE),
+  getReimbursementHistory,
+);
+
+reimbursementRouter.post(
+  '/:id/attachments',
+  requireRole(Role.COLLABORATOR),
+  uploadReimbursementAttachments,
+);
+
+reimbursementRouter.get(
+  '/:id/attachments',
+  requireRole(Role.COLLABORATOR, Role.MANAGER, Role.FINANCE, Role.ADMIN),
+  getReimbursementAttachments,
+);
 
 export default reimbursementRouter;

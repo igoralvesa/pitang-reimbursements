@@ -4,6 +4,7 @@ import request from 'supertest';
 
 import { app } from '../../src/app';
 import { prisma } from '../../src/core/prisma';
+import { Role } from '../../src/types/roles-enum';
 import { authHeader } from '../helpers/auth';
 import {
   createUserFixture,
@@ -15,7 +16,7 @@ const validCreateUserBody = {
   email: 'new.user@email.com',
   name: 'Novo Usuário',
   password: 'Senha@123',
-  role: 'MANAGER',
+  role: Role.MANAGER,
 };
 
 describe('Users endpoints', () => {
@@ -42,14 +43,14 @@ describe('Users endpoints', () => {
     it('creates user successfully as ADMIN', async () => {
       const response = await request(app)
         .post('/users')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send(validCreateUserBody);
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
         email: 'new.user@email.com',
         name: 'Novo Usuário',
-        role: 'MANAGER',
+        role: Role.MANAGER,
       });
       expect(response.body.password).toBeUndefined();
       expect(response.body.passwordHash).toBeUndefined();
@@ -58,7 +59,7 @@ describe('Users endpoints', () => {
     it('defaults created user role to COLLABORATOR when role is not sent', async () => {
       const response = await request(app)
         .post('/users')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send({
           email: 'default.role@email.com',
           name: 'Usuário Sem Perfil',
@@ -66,7 +67,7 @@ describe('Users endpoints', () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.role).toBe('COLLABORATOR');
+      expect(response.body.role).toBe(Role.COLLABORATOR);
     });
 
     it('rejects user creation without token with 401', async () => {
@@ -78,9 +79,9 @@ describe('Users endpoints', () => {
     });
 
     it.each([
-      ['COLABORADOR', 'COLLABORATOR'],
-      ['GESTOR', 'MANAGER'],
-      ['FINANCEIRO', 'FINANCE'],
+      ['COLABORADOR', Role.COLLABORATOR],
+      ['GESTOR', Role.MANAGER],
+      ['FINANCEIRO', Role.FINANCE],
     ] as const)(
       'rejects user creation with %s token with 403',
       async (_label, role) => {
@@ -110,7 +111,7 @@ describe('Users endpoints', () => {
     ])('validates create user body: %s', async (_case, body, field) => {
       const response = await request(app)
         .post('/users')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send(body);
 
       expect(response.status).toBe(400);
@@ -120,7 +121,7 @@ describe('Users endpoints', () => {
     it('rejects duplicated email', async () => {
       const response = await request(app)
         .post('/users')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send({
           ...validCreateUserBody,
           email: 'admin@email.com',
@@ -133,7 +134,7 @@ describe('Users endpoints', () => {
     it('does not store password as plain text', async () => {
       await request(app)
         .post('/users')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send(validCreateUserBody);
 
       const user = await prisma.user.findUnique({
@@ -155,7 +156,7 @@ describe('Users endpoints', () => {
     it('lists users successfully as ADMIN without returning password hashes', async () => {
       const response = await request(app)
         .get('/users')
-        .set('Authorization', await authHeader('ADMIN'));
+        .set('Authorization', await authHeader(Role.ADMIN));
 
       expect(response.status).toBe(200);
       expect(response.body.length).toBeGreaterThan(0);
@@ -170,9 +171,9 @@ describe('Users endpoints', () => {
     });
 
     it.each([
-      ['COLABORADOR', 'COLLABORATOR'],
-      ['GESTOR', 'MANAGER'],
-      ['FINANCEIRO', 'FINANCE'],
+      ['COLABORADOR', Role.COLLABORATOR],
+      ['GESTOR', Role.MANAGER],
+      ['FINANCEIRO', Role.FINANCE],
     ] as const)(
       'rejects list users with %s token with 403',
       async (_label, role) => {
@@ -191,7 +192,7 @@ describe('Users endpoints', () => {
 
       const response = await request(app)
         .get(`/users/${user.id}`)
-        .set('Authorization', await authHeader('ADMIN'));
+        .set('Authorization', await authHeader(Role.ADMIN));
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -204,7 +205,7 @@ describe('Users endpoints', () => {
     it('returns 404 when getting nonexistent user', async () => {
       const response = await request(app)
         .get('/users/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', await authHeader('ADMIN'));
+        .set('Authorization', await authHeader(Role.ADMIN));
 
       expect(response.status).toBe(404);
     });
@@ -216,7 +217,7 @@ describe('Users endpoints', () => {
 
       const response = await request(app)
         .patch(`/users/${user.id}`)
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send({ name: 'Usuário Atualizado' });
 
       expect(response.status).toBe(200);
@@ -231,11 +232,11 @@ describe('Users endpoints', () => {
 
       const response = await request(app)
         .post(`/users/${user.id}/promote`)
-        .set('Authorization', await authHeader('ADMIN'))
-        .send({ role: 'FINANCE' });
+        .set('Authorization', await authHeader(Role.ADMIN))
+        .send({ role: Role.FINANCE });
 
       expect(response.status).toBe(200);
-      expect(response.body.role).toBe('FINANCE');
+      expect(response.body.role).toBe(Role.FINANCE);
     });
   });
 
@@ -245,7 +246,7 @@ describe('Users endpoints', () => {
 
       const response = await request(app)
         .delete(`/users/${user.id}`)
-        .set('Authorization', await authHeader('ADMIN'));
+        .set('Authorization', await authHeader(Role.ADMIN));
 
       expect(response.status).toBe(204);
 

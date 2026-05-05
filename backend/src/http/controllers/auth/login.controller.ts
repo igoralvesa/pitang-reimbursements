@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import jsonwebtoken from 'jsonwebtoken';
 import type { Request, Response } from 'express';
 import type { AuthenticatedUser } from '../../../types/authenticated-user';
+import { Role } from '../../../types/roles-enum';
 
 export async function login(request: Request, response: Response) {
   const defaultMessage = 'Credenciais inválidas';
@@ -29,7 +30,7 @@ export async function login(request: Request, response: Response) {
     const authenticatedUser: AuthenticatedUser = {
       id: user.id,
       email: user.email,
-      role: user.role,
+      role: Role[user.role],
     };
 
     logger.info(

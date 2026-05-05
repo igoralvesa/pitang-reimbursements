@@ -3,6 +3,7 @@ import request from 'supertest';
 
 import { app } from '../../src/app';
 import { prisma } from '../../src/core/prisma';
+import { Role } from '../../src/types/roles-enum';
 import { authHeader } from '../helpers/auth';
 import { disconnectDatabase, prepareDatabase } from '../helpers/test-db';
 
@@ -26,7 +27,7 @@ describe('Categories endpoints', () => {
 
       const response = await request(app)
         .get('/categories')
-        .set('Authorization', await authHeader('COLLABORATOR'));
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([
@@ -45,7 +46,7 @@ describe('Categories endpoints', () => {
     it('creates category successfully as ADMIN', async () => {
       const response = await request(app)
         .post('/categories')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send({ name: 'Transport' });
 
       expect(response.status).toBe(201);
@@ -64,9 +65,9 @@ describe('Categories endpoints', () => {
     });
 
     it.each([
-      ['COLABORADOR', 'COLLABORATOR'],
-      ['GESTOR', 'MANAGER'],
-      ['FINANCEIRO', 'FINANCE'],
+      ['COLABORADOR', Role.COLLABORATOR],
+      ['GESTOR', Role.MANAGER],
+      ['FINANCEIRO', Role.FINANCE],
     ] as const)(
       'rejects category creation with %s token with 403',
       async (_label, role) => {
@@ -85,7 +86,7 @@ describe('Categories endpoints', () => {
     ])('validates category body: %s', async (_case, body) => {
       const response = await request(app)
         .post('/categories')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send(body);
 
       expect(response.status).toBe(400);
@@ -101,7 +102,7 @@ describe('Categories endpoints', () => {
 
       const response = await request(app)
         .put(`/categories/${category.id}`)
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send({ name: 'Meals' });
 
       expect(response.status).toBe(200);
@@ -121,9 +122,9 @@ describe('Categories endpoints', () => {
     });
 
     it.each([
-      ['COLABORADOR', 'COLLABORATOR'],
-      ['GESTOR', 'MANAGER'],
-      ['FINANCEIRO', 'FINANCE'],
+      ['COLABORADOR', Role.COLLABORATOR],
+      ['GESTOR', Role.MANAGER],
+      ['FINANCEIRO', Role.FINANCE],
     ] as const)(
       'rejects category update with %s token with 403',
       async (_label, role) => {
@@ -143,7 +144,7 @@ describe('Categories endpoints', () => {
     it('rejects category update for nonexistent category with 404', async () => {
       const response = await request(app)
         .put('/categories/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', await authHeader('ADMIN'))
+        .set('Authorization', await authHeader(Role.ADMIN))
         .send({ name: 'Meals' });
 
       expect(response.status).toBe(404);
@@ -158,7 +159,7 @@ describe('Categories endpoints', () => {
 
       const response = await request(app)
         .delete(`/categories/${category.id}`)
-        .set('Authorization', await authHeader('ADMIN'));
+        .set('Authorization', await authHeader(Role.ADMIN));
 
       expect(response.status).toBe(204);
 
@@ -179,9 +180,9 @@ describe('Categories endpoints', () => {
     });
 
     it.each([
-      ['COLABORADOR', 'COLLABORATOR'],
-      ['GESTOR', 'MANAGER'],
-      ['FINANCEIRO', 'FINANCE'],
+      ['COLABORADOR', Role.COLLABORATOR],
+      ['GESTOR', Role.MANAGER],
+      ['FINANCEIRO', Role.FINANCE],
     ] as const)(
       'rejects category delete with %s token with 403',
       async (_label, role) => {
@@ -200,7 +201,7 @@ describe('Categories endpoints', () => {
     it('returns 404 when deleting nonexistent category', async () => {
       const response = await request(app)
         .delete('/categories/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', await authHeader('ADMIN'));
+        .set('Authorization', await authHeader(Role.ADMIN));
 
       expect(response.status).toBe(404);
     });

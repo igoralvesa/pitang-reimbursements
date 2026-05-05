@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 
 import { prisma } from '../../src/core/prisma';
 import { defaultPassword, seedDefaultUsers } from '../../src/core/seed';
+import { Role } from '../../src/types/roles-enum';
 
 function assertTestDatabase() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -41,11 +42,11 @@ export async function disconnectDatabase() {
 export async function createUserFixture({
   email,
   name = 'Usuário Teste',
-  role = 'COLLABORATOR',
+  role = Role.COLLABORATOR,
 }: {
   email: string;
   name?: string;
-  role?: 'ADMIN' | 'COLLABORATOR' | 'FINANCE' | 'MANAGER';
+  role?: Role;
 }) {
   return prisma.user.create({
     data: {

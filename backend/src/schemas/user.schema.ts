@@ -1,11 +1,8 @@
 import z from 'zod';
 
-export const userRoleSchema = z.enum([
-  'COLLABORATOR',
-  'MANAGER',
-  'FINANCE',
-  'ADMIN',
-]);
+import { Role } from '@/types/roles-enum';
+
+export const userRoleSchema = z.enum(Role);
 
 const userBaseSchema = z.object({
   name: z.string().trim().min(1, 'Nome é obrigatório'),

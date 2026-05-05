@@ -1,4 +1,5 @@
 import express from 'express';
+import { Role } from '../../types/roles-enum';
 import { requireRole } from '../middlewares/require-role.middleware';
 
 import {
@@ -11,8 +12,8 @@ import {
 const categoryRouter = express.Router();
 
 categoryRouter.get('/', getCategories);
-categoryRouter.post('/', requireRole('ADMIN'), postCategory);
-categoryRouter.put('/:id', requireRole('ADMIN'), putCategory);
-categoryRouter.delete('/:id', requireRole('ADMIN'), deleteCategory);
+categoryRouter.post('/', requireRole(Role.ADMIN), postCategory);
+categoryRouter.put('/:id', requireRole(Role.ADMIN), putCategory);
+categoryRouter.delete('/:id', requireRole(Role.ADMIN), deleteCategory);
 
 export default categoryRouter;

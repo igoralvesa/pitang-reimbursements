@@ -4,6 +4,7 @@ import z from 'zod';
 import { logger } from '@/core/Logger';
 import { prisma } from '@/core/prisma';
 import { userSchema } from '@/schemas/user.schema';
+import { Role } from '@/types/roles-enum';
 import type { Request, Response } from 'express';
 
 export async function postUser(request: Request, response: Response) {
@@ -34,7 +35,7 @@ export async function postUser(request: Request, response: Response) {
       email: data.email,
       name: data.name,
       passwordHash,
-      role: data.role ?? 'COLLABORATOR',
+      role: data.role ?? Role.COLLABORATOR,
     },
   });
 
