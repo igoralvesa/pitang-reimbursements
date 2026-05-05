@@ -1,5 +1,40 @@
 # Pitang Reimbursements
 
+## Tests
+
+Start the local Postgres container:
+
+```bash
+docker compose up -d postgres
+```
+
+The Postgres container creates two databases on first initialization:
+
+- `reimbursements_db` for local development
+- `reimbursements_test_db` for backend tests
+
+The backend test runner uses `backend/.env.test`, which points to `reimbursements_test_db`:
+
+```txt
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/reimbursements_test_db
+```
+
+Run the backend tests from the backend folder:
+
+```bash
+cd backend
+bun install
+bun run test
+```
+
+`bun run test` loads `.env.test`, runs Prisma migrations against `reimbursements_test_db`, and then runs Jest. Tests should not use the development database `reimbursements_db`.
+
+If you already had the Postgres volume before this setup existed, the init SQL will not run again automatically. Create the test database once:
+
+```bash
+docker compose exec postgres createdb -U postgres reimbursements_test_db
+```
+
 ## Postman
 
 To test the API in Postman:

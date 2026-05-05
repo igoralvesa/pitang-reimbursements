@@ -3,7 +3,25 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../src/core/prisma';
 import { defaultPassword, seedDefaultUsers } from '../../src/core/seed';
 
+function assertTestDatabase() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is not defined. Tests were stopped.');
+  }
+
+  const databaseName = new URL(databaseUrl).pathname.replace(/^\//, '');
+
+  if (!/test/i.test(databaseName)) {
+    throw new Error(
+      `Refusing to reset non-test database "${databaseName}". DATABASE_URL must point to a test database.`,
+    );
+  }
+}
+
 export async function resetDatabase() {
+  assertTestDatabase();
+
   await prisma.reimbursementHistory.deleteMany();
   await prisma.attachment.deleteMany();
   await prisma.reimbursementRequest.deleteMany();
