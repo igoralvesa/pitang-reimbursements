@@ -34,7 +34,7 @@ export async function postUser(request: Request, response: Response) {
       email: data.email,
       name: data.name,
       passwordHash,
-      role: 'COLLABORATOR',
+      role: data.role ?? 'COLLABORATOR',
     },
   });
 

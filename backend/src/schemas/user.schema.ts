@@ -7,7 +7,7 @@ export const userRoleSchema = z.enum([
   'ADMIN',
 ]);
 
-export const createUserSchema = z.object({
+const userBaseSchema = z.object({
   name: z.string().trim().min(1, 'Nome é obrigatório'),
   email: z.email('Endereço de e-mail inválido').toLowerCase(),
   password: z
@@ -18,14 +18,23 @@ export const createUserSchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'A senha deve ter pelo menos um caractere especial'),
 });
 
-export const updateUserSchema = createUserSchema
+export const createUserSchema = userBaseSchema.extend({
+  role: userRoleSchema.optional(),
+});
+
+export const updateUserSchema = userBaseSchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Pelo menos um campo deve ser informado',
   });
 
+export const promoteUserSchema = z.object({
+  role: userRoleSchema,
+});
+
 export const userSchema = createUserSchema;
 
 export type UserRoleInput = z.infer<typeof userRoleSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type PromoteUserInput = z.infer<typeof promoteUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;

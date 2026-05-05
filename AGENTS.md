@@ -166,6 +166,56 @@ Show loading, empty, success and error states clearly.
 
 Use ShadcnUI + Tailwind for UI.
 
+## Backend Notes
+
+When creating new controllers, follow the existing project structure and patterns.
+
+When creating new endpoints and schemas, tests must be added in the same implementation cycle. Do not implement an endpoint, schema, middleware, or business rule without also adding the corresponding tests.
+
+Backend tests must be placed under the `testes/` directory at the root of the backend project.
+
+Tests should focus on integration coverage using Jest and Supertest, validating the real API behavior instead of only testing isolated functions.
+
+Whenever a new endpoint is implemented, add tests covering:
+successful request flow;
+request body, params, and query validation;
+authentication requirements;
+authorization/profile restrictions;
+expected HTTP status codes;
+relevant business rules;
+error responses for invalid operations.
+
+Whenever a new Zod schema is implemented or changed, add endpoint-level tests proving that invalid payloads, invalid params, and invalid query params are rejected with the expected HTTP status.
+
+Whenever authentication or authorization is involved, add tests for:
+request without token returning `401`;
+request with invalid token returning `401`;
+authenticated user without permission returning `403`;
+authenticated user with permission succeeding.
+
+Whenever a middleware is implemented or changed, prefer testing it through the routes that use it. Avoid testing middleware only in isolation unless there is a strong reason.
+
+Whenever a reimbursement status transition is implemented, add tests for both valid and invalid transitions.
+
+Examples:
+If an endpoint to create a reimbursement is implemented, tests must cover valid creation, invalid amount, missing expense date, invalid category, inactive category, unauthenticated access, and unauthorized profile access.
+If an endpoint to approve a reimbursement is implemented, tests must cover manager approval, non-manager forbidden access, reimbursement not found, invalid current status, and history creation.
+If an endpoint to pay a reimbursement is implemented, tests must cover finance user payment, non-finance forbidden access, reimbursement not found, payment only when status is `APROVADO`, and history creation.
+If an endpoint to create a user is implemented, tests must cover admin success, unauthenticated access returning `401`, and non-admin access returning `403`.
+
+Whenever an action must generate reimbursement history, tests must assert that the expected history record was created with the correct action.
+
+Required history actions to test when implemented:
+`CREATED`
+`UPDATED`
+`SUBMITTED`
+`APPROVED`
+`REJECTED`
+`PAID`
+`CANCELED`
+
+The goal is not to create tests only for schemas or endpoints mechanically. The goal is to test the behavior expected by the business rule, including validation, permissions, status transitions, and side effects.
+
 ## Style
 
 Keep the implementation simple and readable.

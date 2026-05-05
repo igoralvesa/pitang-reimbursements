@@ -120,7 +120,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario Teste\",\n  \"email\": \"usuario@email.com\",\n  \"password\": \"Senha@123\"\n}",
+              "raw": "{\n  \"name\": \"Usuario Teste\",\n  \"email\": \"usuario@email.com\",\n  \"password\": \"Senha@123\",\n  \"role\": \"COLLABORATOR\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -136,7 +136,7 @@
                 "users"
               ]
             },
-            "description": "Protected route. Requires ADMIN."
+            "description": "Protected route. Requires ADMIN. Role is optional and defaults to COLLABORATOR."
           }
         },
         {
@@ -205,6 +205,40 @@
               ]
             },
             "description": "Protected route. Requires ADMIN."
+          }
+        },
+        {
+          "name": "Promote User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"MANAGER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/promote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "promote"
+              ]
+            },
+            "description": "Protected route. Requires ADMIN. Updates only the user role."
           }
         },
         {

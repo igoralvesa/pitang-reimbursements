@@ -7,15 +7,16 @@ import {
   getUsers,
   patchUser,
   postUser,
+  promoteUser,
 } from '../controllers/users';
 
 const userRouter = express.Router();
-const requireAdmin = requireRole('ADMIN');
 
-userRouter.post('/', requireAdmin, postUser);
-userRouter.get('/', requireAdmin, getUsers);
-userRouter.get('/:id', requireAdmin, getUser);
-userRouter.patch('/:id', requireAdmin, patchUser);
-userRouter.delete('/:id', requireAdmin, deleteUser);
+userRouter.post('/', requireRole('ADMIN'), postUser);
+userRouter.post('/:id/promote', requireRole('ADMIN'), promoteUser);
+userRouter.get('/', requireRole('ADMIN'), getUsers);
+userRouter.get('/:id', requireRole('ADMIN'), getUser);
+userRouter.patch('/:id', requireRole('ADMIN'), patchUser);
+userRouter.delete('/:id', requireRole('ADMIN'), deleteUser);
 
 export default userRouter;

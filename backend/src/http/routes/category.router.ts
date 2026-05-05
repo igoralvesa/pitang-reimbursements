@@ -9,11 +9,10 @@ import {
 } from '../controllers/categories';
 
 const categoryRouter = express.Router();
-const requireAdmin = requireRole('ADMIN');
 
 categoryRouter.get('/', getCategories);
-categoryRouter.post('/', requireAdmin, postCategory);
-categoryRouter.put('/:id', requireAdmin, putCategory);
-categoryRouter.delete('/:id', requireAdmin, deleteCategory);
+categoryRouter.post('/', requireRole('ADMIN'), postCategory);
+categoryRouter.put('/:id', requireRole('ADMIN'), putCategory);
+categoryRouter.delete('/:id', requireRole('ADMIN'), deleteCategory);
 
 export default categoryRouter;
