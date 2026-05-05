@@ -170,9 +170,11 @@ Use ShadcnUI + Tailwind for UI.
 
 When creating new controllers, follow the existing project structure and patterns.
 
+Organize test files by feature/resource. Inside each test file, use one main `describe` for the resource and nested `describe` blocks for each endpoint/action. Keep related scenarios as `it` cases inside the corresponding endpoint block.
+
 When creating new endpoints and schemas, tests must be added in the same implementation cycle. Do not implement an endpoint, schema, middleware, or business rule without also adding the corresponding tests.
 
-Backend tests must be placed under the `testes/` directory at the root of the backend project.
+Backend tests must be placed under the `tests/` directory at the root of the backend project.
 
 Tests should focus on integration coverage using Jest and Supertest, validating the real API behavior instead of only testing isolated functions.
 
