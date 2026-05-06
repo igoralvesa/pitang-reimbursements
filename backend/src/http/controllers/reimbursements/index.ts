@@ -1,4 +1,5 @@
 export * from './approve-reimbursement.controller';
+export * from './cancel-reimbursement.controller';
 export * from './create-reimbursement.controller';
 export * from './get-reimbursement-attachments.controller';
 export * from './get-reimbursement-history.controller';

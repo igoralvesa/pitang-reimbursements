@@ -108,18 +108,58 @@ describe('Reimbursements endpoints', () => {
       );
     });
 
-    it('rejects list reimbursements without token with 401', async () => {
-      const response = await request(app).get('/reimbursements');
+    it('lists only submitted reimbursements as MANAGER', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const submittedReimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+      await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.DRAFT,
+      });
 
-      expect(response.status).toBe(401);
-    });
-
-    it('rejects list reimbursements with MANAGER token with 403', async () => {
       const response = await request(app)
         .get('/reimbursements')
         .set('Authorization', await authHeader(Role.MANAGER));
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].id).toBe(submittedReimbursement.id);
+      expect(response.body[0].status).toBe(ReimbursementStatus.SUBMITTED);
+    });
+
+    it('lists only approved reimbursements as FINANCE', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const approvedReimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.APPROVED,
+      });
+      await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+
+      const response = await request(app)
+        .get('/reimbursements')
+        .set('Authorization', await authHeader(Role.FINANCE));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].id).toBe(approvedReimbursement.id);
+      expect(response.body[0].status).toBe(ReimbursementStatus.APPROVED);
+    });
+
+    it('rejects list reimbursements without token with 401', async () => {
+      const response = await request(app).get('/reimbursements');
+
+      expect(response.status).toBe(401);
     });
   });
 
@@ -155,6 +195,29 @@ describe('Reimbursements endpoints', () => {
         },
       });
       expect(history).toBeTruthy();
+    });
+
+    it('ignores requester and status fields from body when creating reimbursement', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const admin = await getSeedUser('admin@email.com');
+
+      const response = await request(app)
+        .post('/reimbursements')
+        .set('Authorization', await authHeader(Role.COLLABORATOR))
+        .send({
+          amount: 120.75,
+          categoryId: category.id,
+          description: 'Almoço com cliente',
+          expenseDate: '2026-05-01',
+          requesterId: admin.id,
+          status: ReimbursementStatus.APPROVED,
+          userId: admin.id,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.requesterId).toBe(collaborator.id);
+      expect(response.body.status).toBe(ReimbursementStatus.DRAFT);
     });
 
     it.each([
@@ -223,12 +286,16 @@ describe('Reimbursements endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('rejects reimbursement creation with MANAGER token with 403', async () => {
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['MANAGER', Role.MANAGER],
+      ['FINANCE', Role.FINANCE],
+    ] as const)('rejects reimbursement creation with %s token with 403', async (_label, role) => {
       const category = await createCategory();
 
       const response = await request(app)
         .post('/reimbursements')
-        .set('Authorization', await authHeader(Role.MANAGER))
+        .set('Authorization', await authHeader(role))
         .send({
           amount: 120.75,
           categoryId: category.id,
@@ -282,20 +349,80 @@ describe('Reimbursements endpoints', () => {
       expect(response.body.id).toBe(reimbursement.id);
     });
 
+    it('gets submitted reimbursement by id as MANAGER', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}`)
+        .set('Authorization', await authHeader(Role.MANAGER));
+
+      expect(response.status).toBe(200);
+      expect(response.body.id).toBe(reimbursement.id);
+      expect(response.body.status).toBe(ReimbursementStatus.SUBMITTED);
+    });
+
+    it('rejects manager access to non-submitted reimbursement by id with 403', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.APPROVED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}`)
+        .set('Authorization', await authHeader(Role.MANAGER));
+
+      expect(response.status).toBe(403);
+    });
+
+    it('gets approved reimbursement by id as FINANCE', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.APPROVED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}`)
+        .set('Authorization', await authHeader(Role.FINANCE));
+
+      expect(response.status).toBe(200);
+      expect(response.body.id).toBe(reimbursement.id);
+      expect(response.body.status).toBe(ReimbursementStatus.APPROVED);
+    });
+
+    it('rejects finance access to non-approved reimbursement by id with 403', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}`)
+        .set('Authorization', await authHeader(Role.FINANCE));
+
+      expect(response.status).toBe(403);
+    });
+
     it('rejects get reimbursement by id without token with 401', async () => {
       const response = await request(app).get(
         '/reimbursements/00000000-0000-0000-0000-000000000000',
       );
 
       expect(response.status).toBe(401);
-    });
-
-    it('rejects get reimbursement by id with MANAGER token with 403', async () => {
-      const response = await request(app)
-        .get('/reimbursements/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', await authHeader(Role.MANAGER));
-
-      expect(response.status).toBe(403);
     });
 
     it('rejects invalid reimbursement id with 400', async () => {
@@ -372,40 +499,44 @@ describe('Reimbursements endpoints', () => {
       expect(history).toBeTruthy();
     });
 
-    it('updates any reimbursement as ADMIN even when it is not draft', async () => {
+    it('does not allow changing requester or status when updating reimbursement', async () => {
       const category = await createCategory();
-      const newCategory = await createCategory();
       const collaborator = await getSeedUser('colaborador@email.com');
       const admin = await getSeedUser('admin@email.com');
       const reimbursement = await createReimbursementFixture({
         categoryId: category.id,
         requesterId: collaborator.id,
-        status: ReimbursementStatus.SUBMITTED,
       });
 
       const response = await request(app)
         .put(`/reimbursements/${reimbursement.id}`)
-        .set('Authorization', await authHeader(Role.ADMIN))
+        .set('Authorization', await authHeader(Role.COLLABORATOR))
         .send({
-          categoryId: newCategory.id,
-          expenseDate: '2026-05-02',
+          requesterId: admin.id,
+          status: ReimbursementStatus.APPROVED,
+          userId: admin.id,
+          description: 'Descrição atualizada',
         });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
-        categoryId: newCategory.id,
         id: reimbursement.id,
-        status: ReimbursementStatus.SUBMITTED,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.DRAFT,
       });
+    });
 
-      const history = await prisma.reimbursementHistory.findFirst({
-        where: {
-          action: ReimbursementHistoryAction.UPDATED,
-          reimbursementRequestId: reimbursement.id,
-          userId: admin.id,
-        },
-      });
-      expect(history).toBeTruthy();
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['MANAGER', Role.MANAGER],
+      ['FINANCE', Role.FINANCE],
+    ] as const)('rejects update reimbursement with %s token with 403', async (_label, role) => {
+      const response = await request(app)
+        .put('/reimbursements/00000000-0000-0000-0000-000000000000')
+        .set('Authorization', await authHeader(role))
+        .send({ description: 'Atualização' });
+
+      expect(response.status).toBe(403);
     });
 
     it('rejects update reimbursement without token with 401', async () => {
@@ -416,19 +547,10 @@ describe('Reimbursements endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('rejects update reimbursement with MANAGER token with 403', async () => {
-      const response = await request(app)
-        .put('/reimbursements/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', await authHeader(Role.MANAGER))
-        .send({ description: 'Atualização' });
-
-      expect(response.status).toBe(403);
-    });
-
     it('rejects invalid reimbursement id with 400', async () => {
       const response = await request(app)
         .put('/reimbursements/invalid-id')
-        .set('Authorization', await authHeader(Role.ADMIN))
+        .set('Authorization', await authHeader(Role.COLLABORATOR))
         .send({ description: 'Atualização' });
 
       expect(response.status).toBe(400);
@@ -464,7 +586,7 @@ describe('Reimbursements endpoints', () => {
     it('returns 404 when updating nonexistent reimbursement', async () => {
       const response = await request(app)
         .put('/reimbursements/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', await authHeader(Role.ADMIN))
+        .set('Authorization', await authHeader(Role.COLLABORATOR))
         .send({ description: 'Atualização' });
 
       expect(response.status).toBe(404);
@@ -582,10 +704,14 @@ describe('Reimbursements endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('rejects submit with invalid role with 403', async () => {
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['MANAGER', Role.MANAGER],
+      ['FINANCE', Role.FINANCE],
+    ] as const)('rejects submit with %s token with 403', async (_label, role) => {
       const response = await request(app)
         .post('/reimbursements/00000000-0000-0000-0000-000000000000/submit')
-        .set('Authorization', await authHeader(Role.MANAGER));
+        .set('Authorization', await authHeader(role));
 
       expect(response.status).toBe(403);
     });
@@ -637,6 +763,99 @@ describe('Reimbursements endpoints', () => {
     });
   });
 
+  describe('POST /reimbursements/:id/cancel', () => {
+    it('cancels own draft reimbursement as COLLABORATOR', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+      });
+
+      const response = await request(app)
+        .post(`/reimbursements/${reimbursement.id}/cancel`)
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(ReimbursementStatus.CANCELED);
+
+      const history = await prisma.reimbursementHistory.findFirst({
+        where: {
+          action: ReimbursementHistoryAction.CANCELED,
+          reimbursementRequestId: reimbursement.id,
+          userId: collaborator.id,
+        },
+      });
+      expect(history).toBeTruthy();
+    });
+
+    it('rejects cancel without token with 401', async () => {
+      const response = await request(app).post(
+        '/reimbursements/00000000-0000-0000-0000-000000000000/cancel',
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['MANAGER', Role.MANAGER],
+      ['FINANCE', Role.FINANCE],
+    ] as const)('rejects cancel with %s token with 403', async (_label, role) => {
+      const response = await request(app)
+        .post('/reimbursements/00000000-0000-0000-0000-000000000000/cancel')
+        .set('Authorization', await authHeader(role));
+
+      expect(response.status).toBe(403);
+    });
+
+    it('returns 404 when canceling nonexistent reimbursement', async () => {
+      const response = await request(app)
+        .post('/reimbursements/00000000-0000-0000-0000-000000000000/cancel')
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe(
+        'Solicitação de reembolso não encontrada',
+      );
+    });
+
+    it('rejects cancel for another requester reimbursement with 403', async () => {
+      const category = await createCategory();
+      const admin = await getSeedUser('admin@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: admin.id,
+      });
+
+      const response = await request(app)
+        .post(`/reimbursements/${reimbursement.id}/cancel`)
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe(
+        'Usuário sem permissão para acessar este recurso',
+      );
+    });
+
+    it('rejects cancel when reimbursement is not draft with 400', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+
+      const response = await request(app)
+        .post(`/reimbursements/${reimbursement.id}/cancel`)
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Transição de status inválida');
+    });
+  });
+
   describe('POST /reimbursements/:id/approve', () => {
     it('approves submitted reimbursement as MANAGER', async () => {
       const category = await createCategory();
@@ -673,10 +892,14 @@ describe('Reimbursements endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('rejects approve with invalid role with 403', async () => {
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['COLLABORATOR', Role.COLLABORATOR],
+      ['FINANCE', Role.FINANCE],
+    ] as const)('rejects approve with %s token with 403', async (_label, role) => {
       const response = await request(app)
         .post('/reimbursements/00000000-0000-0000-0000-000000000000/approve')
-        .set('Authorization', await authHeader(Role.ADMIN));
+        .set('Authorization', await authHeader(role));
 
       expect(response.status).toBe(403);
     });
@@ -749,10 +972,14 @@ describe('Reimbursements endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('rejects reject with invalid role with 403', async () => {
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['COLLABORATOR', Role.COLLABORATOR],
+      ['FINANCE', Role.FINANCE],
+    ] as const)('rejects reject with %s token with 403', async (_label, role) => {
       const response = await request(app)
         .post('/reimbursements/00000000-0000-0000-0000-000000000000/reject')
-        .set('Authorization', await authHeader(Role.COLLABORATOR))
+        .set('Authorization', await authHeader(role))
         .send({ rejectionReason: 'Comprovante ilegível' });
 
       expect(response.status).toBe(403);
@@ -834,10 +1061,14 @@ describe('Reimbursements endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('rejects pay with invalid role with 403', async () => {
+    it.each([
+      ['ADMIN', Role.ADMIN],
+      ['COLLABORATOR', Role.COLLABORATOR],
+      ['MANAGER', Role.MANAGER],
+    ] as const)('rejects pay with %s token with 403', async (_label, role) => {
       const response = await request(app)
         .post('/reimbursements/00000000-0000-0000-0000-000000000000/pay')
-        .set('Authorization', await authHeader(Role.MANAGER));
+        .set('Authorization', await authHeader(role));
 
       expect(response.status).toBe(403);
     });

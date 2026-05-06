@@ -8,7 +8,6 @@ import {
   reimbursementParamsSchema,
   updateReimbursementSchema,
 } from '@/schemas/reimbursement.schema';
-import { Role } from '@/types/roles-enum';
 import type { Request, Response } from 'express';
 import z from 'zod';
 
@@ -59,10 +58,7 @@ export async function updateReimbursement(
       .json({ message: 'Solicitação de reembolso não encontrada' });
   }
 
-  if (
-    loggedUser.role === Role.COLLABORATOR &&
-    reimbursementExists.requesterId !== loggedUser.id
-  ) {
+  if (reimbursementExists.requesterId !== loggedUser.id) {
     logger.warn(
       {
         reimbursementId: params.id,
@@ -77,10 +73,7 @@ export async function updateReimbursement(
       .json({ message: 'Usuário sem permissão para acessar este recurso' });
   }
 
-  if (
-    loggedUser.role === Role.COLLABORATOR &&
-    reimbursementExists.status !== ReimbursementStatus.DRAFT
-  ) {
+  if (reimbursementExists.status !== ReimbursementStatus.DRAFT) {
     logger.warn(
       {
         reimbursementId: params.id,

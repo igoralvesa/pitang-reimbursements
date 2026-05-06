@@ -1,3 +1,4 @@
+import { ReimbursementStatus } from '../../../../generated/prisma/client';
 import { logger } from '@/core/Logger';
 import { prisma } from '@/core/prisma';
 import { reimbursementParamsSchema } from '@/schemas/reimbursement.schema';
@@ -59,14 +60,21 @@ export async function getReimbursement(request: Request, response: Response) {
       .json({ message: 'Solicitação de reembolso não encontrada' });
   }
 
-  if (
-    loggedUser.role === Role.COLLABORATOR &&
-    reimbursement.requesterId !== loggedUser.id
-  ) {
+  const canAccessReimbursement =
+    loggedUser.role === Role.ADMIN ||
+    (loggedUser.role === Role.COLLABORATOR &&
+      reimbursement.requesterId === loggedUser.id) ||
+    (loggedUser.role === Role.MANAGER &&
+      reimbursement.status === ReimbursementStatus.SUBMITTED) ||
+    (loggedUser.role === Role.FINANCE &&
+      reimbursement.status === ReimbursementStatus.APPROVED);
+
+  if (!canAccessReimbursement) {
     logger.warn(
       {
         reimbursementId: data.id,
-        requesterId: reimbursement.requesterId,
+        role: loggedUser.role,
+        status: reimbursement.status,
         userId: loggedUser.id,
       },
       'Usuário sem permissão para consultar solicitação de reembolso',

@@ -9,6 +9,7 @@ import {
   postReimbursement,
   submitReimbursement,
   approveReimbursement,
+  cancelReimbursement,
   rejectReimbursement,
   payReimbursement,
   getReimbursementHistory,
@@ -46,6 +47,12 @@ reimbursementRouter.post(
   '/:id/submit',
   requireRole(Role.COLLABORATOR),
   submitReimbursement,
+);
+
+reimbursementRouter.post(
+  '/:id/cancel',
+  requireRole(Role.COLLABORATOR),
+  cancelReimbursement,
 );
 
 reimbursementRouter.post(

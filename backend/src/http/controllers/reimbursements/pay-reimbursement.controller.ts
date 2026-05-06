@@ -8,10 +8,7 @@ import { reimbursementParamsSchema } from '@/schemas/reimbursement.schema';
 import type { Request, Response } from 'express';
 import z from 'zod';
 
-export async function payReimbursement(
-  request: Request,
-  response: Response,
-) {
+export async function payReimbursement(request: Request, response: Response) {
   const loggedUser = request.loggedUser!;
 
   const { data: params, error } = reimbursementParamsSchema.safeParse(
@@ -48,7 +45,7 @@ export async function payReimbursement(
       histories: {
         create: {
           action: ReimbursementHistoryAction.PAID,
-          observation: 'Solicitação de reembolso paga',
+          observation: 'Pagamento realizado pelo financeiro',
           userId: loggedUser.id,
         },
       },
@@ -59,7 +56,7 @@ export async function payReimbursement(
 
   logger.info(
     { reimbursementId: paidReimbursement.id, userId: loggedUser.id },
-    'Solicitação de reembolso paga',
+    'Pagamento realizado pelo financeiro',
   );
 
   return response.status(200).json(paidReimbursement);

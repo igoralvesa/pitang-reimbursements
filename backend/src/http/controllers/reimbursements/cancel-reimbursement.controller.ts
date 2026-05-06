@@ -8,7 +8,7 @@ import { reimbursementParamsSchema } from '@/schemas/reimbursement.schema';
 import type { Request, Response } from 'express';
 import z from 'zod';
 
-export async function submitReimbursement(
+export async function cancelReimbursement(
   request: Request,
   response: Response,
 ) {
@@ -21,7 +21,7 @@ export async function submitReimbursement(
   if (error) {
     logger.warn(
       { fields: Object.keys(z.treeifyError(error).properties ?? {}) },
-      'Parâmetros inválidos para envio de solicitação de reembolso',
+      'Parâmetros inválidos para cancelamento de solicitação de reembolso',
     );
 
     return response.status(400).json(z.treeifyError(error).properties);
@@ -49,24 +49,24 @@ export async function submitReimbursement(
     });
   }
 
-  const submittedReimbursement = await prisma.reimbursementRequest.update({
+  const canceledReimbursement = await prisma.reimbursementRequest.update({
     data: {
       histories: {
         create: {
-          action: ReimbursementHistoryAction.SUBMITTED,
-          observation: 'Solicitação enviada para análise',
+          action: ReimbursementHistoryAction.CANCELED,
+          observation: 'Solicitação cancelada pelo colaborador',
           userId: loggedUser.id,
         },
       },
-      status: ReimbursementStatus.SUBMITTED,
+      status: ReimbursementStatus.CANCELED,
     },
     where: { id: params.id },
   });
 
   logger.info(
-    { reimbursementId: submittedReimbursement.id, userId: loggedUser.id },
-    'Solicitação enviada para análise',
+    { reimbursementId: canceledReimbursement.id, userId: loggedUser.id },
+    'Solicitação cancelada pelo colaborador',
   );
 
-  return response.status(200).json(submittedReimbursement);
+  return response.status(200).json(canceledReimbursement);
 }

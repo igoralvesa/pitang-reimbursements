@@ -1,4 +1,7 @@
-import { ReimbursementHistoryAction } from '../../../../generated/prisma/client';
+import {
+  ReimbursementHistoryAction,
+  ReimbursementStatus,
+} from '../../../../generated/prisma/client';
 import { logger } from '@/core/Logger';
 import { prisma } from '@/core/prisma';
 import { createReimbursementSchema } from '@/schemas/reimbursement.schema';
@@ -44,11 +47,12 @@ export async function postReimbursement(request: Request, response: Response) {
         create: {
           // the reimbursementRequestId is automatically linked by Prisma, so we don't need to set it here
           action: ReimbursementHistoryAction.CREATED,
-          observation: 'Solicitação de reembolso criada',
+          observation: 'Solicitação criada pelo colaborador',
           userId: loggedUser.id,
         },
       },
       requesterId: loggedUser.id,
+      status: ReimbursementStatus.DRAFT,
     },
     include: {
       category: true,
@@ -68,7 +72,7 @@ export async function postReimbursement(request: Request, response: Response) {
       reimbursementId: reimbursement.id,
       requesterId: loggedUser.id,
     },
-    'Solicitação de reembolso criada',
+    'Solicitação criada pelo colaborador',
   );
 
   return response.status(201).json(reimbursement);

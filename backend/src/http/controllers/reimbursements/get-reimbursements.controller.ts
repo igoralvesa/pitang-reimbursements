@@ -1,3 +1,4 @@
+import { ReimbursementStatus } from '../../../../generated/prisma/client';
 import { logger } from '@/core/Logger';
 import { prisma } from '@/core/prisma';
 import { Role } from '@/types/roles-enum';
@@ -8,6 +9,14 @@ export async function getReimbursements(
   response: Response,
 ) {
   const loggedUser = request.loggedUser!;
+  const visibilityFilter =
+    loggedUser.role === Role.COLLABORATOR
+      ? { requesterId: loggedUser.id }
+      : loggedUser.role === Role.MANAGER
+        ? { status: ReimbursementStatus.SUBMITTED }
+        : loggedUser.role === Role.FINANCE
+          ? { status: ReimbursementStatus.APPROVED }
+          : undefined;
 
   const reimbursements = await prisma.reimbursementRequest.findMany({
     include: {
@@ -22,10 +31,7 @@ export async function getReimbursements(
       },
     },
     orderBy: { createdAt: 'desc' },
-    where:
-      loggedUser.role === Role.COLLABORATOR
-        ? { requesterId: loggedUser.id }
-        : undefined,
+    where: visibilityFilter,
   });
 
   logger.info(

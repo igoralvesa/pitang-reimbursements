@@ -48,7 +48,7 @@ export async function approveReimbursement(
       histories: {
         create: {
           action: ReimbursementHistoryAction.APPROVED,
-          observation: 'Solicitação de reembolso aprovada',
+          observation: 'Solicitação aprovada pelo gestor',
           userId: loggedUser.id,
         },
       },
@@ -59,7 +59,7 @@ export async function approveReimbursement(
 
   logger.info(
     { reimbursementId: approvedReimbursement.id, userId: loggedUser.id },
-    'Solicitação de reembolso aprovada',
+    'Solicitação aprovada pelo gestor',
   );
 
   return response.status(200).json(approvedReimbursement);

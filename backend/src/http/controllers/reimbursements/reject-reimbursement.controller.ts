@@ -76,7 +76,7 @@ export async function rejectReimbursement(
 
   logger.info(
     { reimbursementId: rejectedReimbursement.id, userId: loggedUser.id },
-    'Solicitação de reembolso rejeitada',
+    'Solicitação rejeitada pelo gestor',
   );
 
   return response.status(200).json(rejectedReimbursement);
