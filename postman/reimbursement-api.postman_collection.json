@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Reimbursement API",
-    "description": "Postman collection for auth, users, and categories routes.",
+    "description": "Postman collection for auth, users, categories, and reimbursement routes.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -362,6 +362,309 @@
               ]
             },
             "description": "Protected route. Requires ADMIN. Soft deletes category by setting active false."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reimbursements",
+      "item": [
+        {
+          "name": "List Reimbursements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements"
+              ]
+            },
+            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN. Visibility depends on role: collaborator sees own requests; manager sees SUBMITTED; finance sees APPROVED; admin sees all."
+          }
+        },
+        {
+          "name": "Create Reimbursement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var response = {};",
+                  "",
+                  "try {",
+                  "  response = pm.response.json();",
+                  "} catch (error) {",
+                  "  response = {};",
+                  "}",
+                  "",
+                  "if (response.id) {",
+                  "  pm.environment.set('reimbursementId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 125.5,\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Taxi para reunião com cliente\",\n  \"expenseDate\": \"2026-05-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements"
+              ]
+            },
+            "description": "Protected route. Requires COLLABORATOR. Creates the request for the authenticated user with initial status DRAFT. Do not send requester/owner/status fields."
+          }
+        },
+        {
+          "name": "Get Reimbursement By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}"
+              ]
+            },
+            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN. Visibility depends on role."
+          }
+        },
+        {
+          "name": "Update Reimbursement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150,\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Taxi para reunião com cliente - atualizado\",\n  \"expenseDate\": \"2026-05-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}"
+              ]
+            },
+            "description": "Protected route. Requires COLLABORATOR. Collaborator can update only their own DRAFT reimbursement. Owner and status cannot be changed here."
+          }
+        },
+        {
+          "name": "Submit Reimbursement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "submit"
+              ]
+            },
+            "description": "Protected route. Requires COLLABORATOR. Collaborator can submit only their own DRAFT reimbursement. Changes status to SUBMITTED and creates history."
+          }
+        },
+        {
+          "name": "Cancel Reimbursement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "cancel"
+              ]
+            },
+            "description": "Protected route. Requires COLLABORATOR. Collaborator can cancel only their own DRAFT reimbursement. Changes status to CANCELED and creates history."
+          }
+        },
+        {
+          "name": "Approve Reimbursement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "approve"
+              ]
+            },
+            "description": "Protected route. Requires MANAGER. Approves only SUBMITTED reimbursements. Changes status to APPROVED and creates history."
+          }
+        },
+        {
+          "name": "Reject Reimbursement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Comprovante insuficiente\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "reject"
+              ]
+            },
+            "description": "Protected route. Requires MANAGER. Rejects only SUBMITTED reimbursements. Rejection reason is required and history is created."
+          }
+        },
+        {
+          "name": "Pay Reimbursement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "pay"
+              ]
+            },
+            "description": "Protected route. Requires FINANCE. Marks only APPROVED reimbursements as PAID and creates history."
+          }
+        },
+        {
+          "name": "Get Reimbursement History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "history"
+              ]
+            },
+            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN. Returns history fields for request, user, action, timestamp, and observation."
+          }
+        },
+        {
+          "name": "Upload Reimbursement Attachment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "attachments"
+              ]
+            },
+            "description": "Protected route. Requires COLLABORATOR. Collaborator can upload one PDF file only to their own DRAFT reimbursement. Field name: file. Allowed MIME type: application/pdf. Max size: 5MB."
+          }
+        },
+        {
+          "name": "Get Reimbursement Attachments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reimbursements/{{reimbursementId}}/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reimbursements",
+                "{{reimbursementId}}",
+                "attachments"
+              ]
+            },
+            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN."
           }
         }
       ]

@@ -1,5 +1,6 @@
 import express from 'express';
 import { Role } from '../../types/roles-enum';
+import { reimbursementAttachmentUploadMiddleware } from '../middlewares/reimbursement-attachment-upload.middleware';
 import { requireRole } from '../middlewares/require-role.middleware';
 
 import {
@@ -82,6 +83,7 @@ reimbursementRouter.get(
 reimbursementRouter.post(
   '/:id/attachments',
   requireRole(Role.COLLABORATOR),
+  reimbursementAttachmentUploadMiddleware,
   uploadReimbursementAttachments,
 );
 

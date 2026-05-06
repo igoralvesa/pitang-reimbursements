@@ -1,5 +1,5 @@
 import { prisma } from '../src/core/prisma';
-import { seedDefaultUsers } from '../src/core/seed';
+import { seedDefaultData } from '../src/core/seed';
 
-await seedDefaultUsers();
+await seedDefaultData();
 await prisma.$disconnect();
