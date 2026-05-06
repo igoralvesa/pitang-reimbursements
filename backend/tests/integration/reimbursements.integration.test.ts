@@ -1101,4 +1101,176 @@ describe('Reimbursements endpoints', () => {
       expect(response.body.message).toBe('Transição de status inválida');
     });
   });
+
+  describe('GET /reimbursements/:id/history', () => {
+    it('lists reimbursement history with only request, user, action, timestamp and observation', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+      });
+
+      await prisma.reimbursementHistory.createMany({
+        data: [
+          {
+            action: ReimbursementHistoryAction.CREATED,
+            observation: 'Solicitação criada',
+            reimbursementRequestId: reimbursement.id,
+            userId: collaborator.id,
+          },
+          {
+            action: ReimbursementHistoryAction.UPDATED,
+            observation: 'Solicitação atualizada',
+            reimbursementRequestId: reimbursement.id,
+            userId: collaborator.id,
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0]).toMatchObject({
+        action: ReimbursementHistoryAction.CREATED,
+        observation: 'Solicitação criada',
+        reimbursementRequestId: reimbursement.id,
+        userId: collaborator.id,
+      });
+      expect(response.body[0].createdAt).toEqual(expect.any(String));
+      expect(Object.keys(response.body[0]).sort()).toEqual([
+        'action',
+        'createdAt',
+        'observation',
+        'reimbursementRequestId',
+        'userId',
+      ]);
+    });
+
+    it('allows ADMIN to list any reimbursement history', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.ADMIN));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it('allows MANAGER to list submitted reimbursement history', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.MANAGER));
+
+      expect(response.status).toBe(200);
+    });
+
+    it('allows FINANCE to list approved reimbursement history', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.APPROVED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.FINANCE));
+
+      expect(response.status).toBe(200);
+    });
+
+    it('rejects history list without token with 401', async () => {
+      const response = await request(app).get(
+        '/reimbursements/00000000-0000-0000-0000-000000000000/history',
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    it('rejects invalid reimbursement id with 400', async () => {
+      const response = await request(app)
+        .get('/reimbursements/invalid-id/history')
+        .set('Authorization', await authHeader(Role.ADMIN));
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('id');
+    });
+
+    it('returns 404 when reimbursement does not exist', async () => {
+      const response = await request(app)
+        .get('/reimbursements/00000000-0000-0000-0000-000000000000/history')
+        .set('Authorization', await authHeader(Role.ADMIN));
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe(
+        'Solicitação de reembolso não encontrada',
+      );
+    });
+
+    it('rejects collaborator access to another requester history with 403', async () => {
+      const category = await createCategory();
+      const admin = await getSeedUser('admin@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: admin.id,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.COLLABORATOR));
+
+      expect(response.status).toBe(403);
+    });
+
+    it('rejects manager access to non-submitted reimbursement history with 403', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.APPROVED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.MANAGER));
+
+      expect(response.status).toBe(403);
+    });
+
+    it('rejects finance access to non-approved reimbursement history with 403', async () => {
+      const category = await createCategory();
+      const collaborator = await getSeedUser('colaborador@email.com');
+      const reimbursement = await createReimbursementFixture({
+        categoryId: category.id,
+        requesterId: collaborator.id,
+        status: ReimbursementStatus.SUBMITTED,
+      });
+
+      const response = await request(app)
+        .get(`/reimbursements/${reimbursement.id}/history`)
+        .set('Authorization', await authHeader(Role.FINANCE));
+
+      expect(response.status).toBe(403);
+    });
+  });
 });
