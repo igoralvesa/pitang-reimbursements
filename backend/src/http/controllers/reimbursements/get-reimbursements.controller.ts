@@ -4,10 +4,7 @@ import { prisma } from '@/core/prisma';
 import { Role } from '@/types/roles-enum';
 import type { Request, Response } from 'express';
 
-export async function getReimbursements(
-  request: Request,
-  response: Response,
-) {
+export async function getReimbursements(request: Request, response: Response) {
   const loggedUser = request.loggedUser!;
   const visibilityFilter =
     loggedUser.role === Role.COLLABORATOR
@@ -15,7 +12,11 @@ export async function getReimbursements(
       : loggedUser.role === Role.MANAGER
         ? { status: ReimbursementStatus.SUBMITTED }
         : loggedUser.role === Role.FINANCE
-          ? { status: ReimbursementStatus.APPROVED }
+          ? {
+              status: {
+                in: [ReimbursementStatus.APPROVED, ReimbursementStatus.PAID],
+              },
+            }
           : undefined;
 
   const reimbursements = await prisma.reimbursementRequest.findMany({
