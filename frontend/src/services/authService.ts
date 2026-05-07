@@ -1,18 +1,9 @@
 import { httpClient } from '@/services/httpClient';
-import type { User } from '@/types/domain';
-
-export type LoginPayload = {
-  email: string;
-  password: string;
-};
-
-export type LoginResponse = {
-  token: string;
-};
+import type { AuthenticatedUser, LoginPayload, LoginResponse } from '@/types/api';
 
 export type LoginSession = {
   token: string;
-  user: User;
+  user: AuthenticatedUser;
 };
 
 export const authService = {
@@ -22,13 +13,22 @@ export const authService = {
     return data;
   },
 
-  async me(token: string): Promise<User> {
-    const { data } = await httpClient.get<User>('/auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  async getMe(token?: string): Promise<AuthenticatedUser> {
+    const { data } = await httpClient.get<AuthenticatedUser>(
+      '/auth/me',
+      token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined,
+    );
 
     return data;
+  },
+
+  async me(token: string): Promise<AuthenticatedUser> {
+    return this.getMe(token);
   },
 };
