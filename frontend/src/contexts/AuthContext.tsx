@@ -10,7 +10,7 @@ import {
 import { mockUsers } from '@/mocks/mockData';
 import type { User, UserRole } from '@/types/domain';
 
-export const DEFAULT_MOCK_ROLE: UserRole = 'COLLABORATOR';
+export const DEFAULT_MOCK_ROLE: UserRole = 'ADMIN';
 
 type AuthContextValue = {
   user: User | null;
