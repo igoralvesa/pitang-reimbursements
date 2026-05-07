@@ -10,7 +10,15 @@ export async function getReimbursements(request: Request, response: Response) {
     loggedUser.role === Role.COLLABORATOR
       ? { requesterId: loggedUser.id }
       : loggedUser.role === Role.MANAGER
-        ? { status: ReimbursementStatus.SUBMITTED }
+        ? {
+            status: {
+              in: [
+                ReimbursementStatus.SUBMITTED,
+                ReimbursementStatus.APPROVED,
+                ReimbursementStatus.REJECTED,
+              ],
+            },
+          }
         : loggedUser.role === Role.FINANCE
           ? {
               status: {
