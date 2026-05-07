@@ -156,6 +156,18 @@ Allowed file types can be simple, such as PDF, JPG and PNG.
 
 ## Frontend Notes
 
+### Stack:
+
+- React + Vite
+- React Router
+- Context API for Auth
+- TanStack Query
+- Axios
+- Zod
+- React Hook Form
+- Shadcn UI
+- Tailwind CSS
+
 Use Context API for auth state, token and user role.
 
 Use protected routes.
@@ -163,8 +175,6 @@ Use protected routes.
 Render buttons/actions according to the logged user role and reimbursement status.
 
 Show loading, empty, success and error states clearly.
-
-Use ShadcnUI + Tailwind for UI.
 
 ## Backend Notes
 

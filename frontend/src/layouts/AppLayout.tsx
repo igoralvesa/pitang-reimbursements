@@ -41,7 +41,10 @@ export function AppLayout() {
 
                         return (
                           <DropdownMenuItem key={item.to} asChild>
-                            <Link to={item.to} className='flex items-center gap-2'>
+                            <Link
+                              to={item.to}
+                              className='flex items-center gap-2'
+                            >
                               <Icon className='size-4' />
                               {item.label}
                             </Link>

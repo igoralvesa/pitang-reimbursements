@@ -1,25 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Pencil, Plus, Search, ShieldPlus, Trash2, Users } from 'lucide-react';
+import { Pencil, Plus, ShieldPlus, Trash2, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { ConfirmIconButton, TooltipIconButton } from '@/components/admin/AdminActions';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
+import { AdminFilters } from '@/components/admin/AdminFilters';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
+import { AdminTableCard } from '@/components/admin/AdminTableCard';
 import { Feedback } from '@/components/Feedback';
 import { RoleBadge } from '@/components/RoleBadge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -27,15 +22,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useMockData } from '@/contexts/MockDataContext';
 import { formatDateTime, roleLabels } from '@/lib/formatters';
 import type { User, UserRole } from '@/types/domain';
@@ -65,6 +53,11 @@ const roleFilterLabels: Record<RoleFilter, string> = {
   ADMIN: 'Administradores',
 };
 
+const roleFilterOptions = (Object.keys(roleFilterLabels) as RoleFilter[]).map((role) => ({
+  label: roleFilterLabels[role],
+  value: role,
+}));
+
 export function UsersPage() {
   const { changeUserRole, createUser, deleteUser, updateUser, users } = useMockData();
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -92,56 +85,33 @@ export function UsersPage() {
   return (
     <TooltipProvider>
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Administração</p>
-            <h1 className="mt-2 flex items-center gap-2 text-3xl font-semibold text-zinc-950 dark:text-zinc-50">
-              <Users className="size-7 text-orange-700" />
-              Gestão de usuários
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Cadastre usuários e altere perfis de acesso.
-            </p>
-          </div>
-          <UserDialog
+        <AdminPageHeader
+          icon={Users}
+          title="Gestão de usuários"
+          description="Cadastre usuários e altere perfis de acesso."
+          action={<UserDialog
             mode="create"
             onSubmit={(values) => {
               createUser(values as UserFormValues);
               setFeedback('Usuário criado.');
             }}
-          />
-        </div>
+          />}
+        />
 
         <Feedback message={feedback} />
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nome ou e-mail"
-                className="pl-9"
-                aria-label="Buscar usuários"
-              />
-            </div>
-            <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as RoleFilter)}>
-              <SelectTrigger className="w-full bg-white lg:w-56 dark:bg-zinc-900" aria-label="Filtrar por perfil">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(roleFilterLabels) as RoleFilter[]).map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {roleFilterLabels[role]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <AdminFilters
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar por nome ou e-mail"
+          searchLabel="Buscar usuários"
+          filterValue={roleFilter}
+          onFilterChange={setRoleFilter}
+          filterLabel="Filtrar por perfil"
+          filterOptions={roleFilterOptions}
+        />
 
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <AdminTableCard>
           {filteredUsers.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
@@ -197,30 +167,16 @@ export function UsersPage() {
               </Table>
             </div>
           ) : (
-            <UsersEmptyState onReset={resetFilters} />
+            <AdminEmptyState
+              icon={Users}
+              title="Nenhum usuário encontrado"
+              description="Ajuste a busca ou o filtro de perfil para localizar um usuário existente."
+              onReset={resetFilters}
+            />
           )}
-        </div>
+        </AdminTableCard>
       </div>
     </TooltipProvider>
-  );
-}
-
-function UsersEmptyState({ onReset }: { onReset: () => void }) {
-  return (
-    <div className="flex flex-col items-center gap-4 px-4 py-14 text-center">
-      <div className="rounded-full bg-orange-50 p-3 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300">
-        <Users className="size-7" />
-      </div>
-      <div>
-        <h2 className="text-xl font-semibold text-zinc-950 dark:text-zinc-50">Nenhum usuário encontrado</h2>
-        <p className="mt-1 max-w-md text-sm text-zinc-500 dark:text-zinc-400">
-          Ajuste a busca ou o filtro de perfil para localizar um usuário existente.
-        </p>
-      </div>
-      <Button type="button" variant="outline" onClick={onReset}>
-        Limpar filtros
-      </Button>
-    </div>
   );
 }
 
@@ -268,20 +224,16 @@ function UserDialog({
           </Button>
         ) : (
           <span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="button" size="icon-sm" variant="outline" aria-label={`Editar usuário ${user?.name ?? ''}`}>
-                  <Pencil className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Editar usuário</TooltipContent>
-            </Tooltip>
+            <TooltipIconButton icon={Pencil} label={`Editar usuário ${user?.name ?? ''}`} />
           </span>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? 'Novo usuário' : 'Editar usuário'}</DialogTitle>
+          <DialogDescription>
+            Informe os dados básicos do usuário para acesso ao sistema.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
@@ -343,25 +295,19 @@ function ChangeRoleDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                aria-label={`Alterar perfil de ${user.name}`}
-                className="border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-900 dark:text-orange-300 dark:hover:bg-orange-950/30"
-              >
-                <ShieldPlus className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Alterar perfil</TooltipContent>
-          </Tooltip>
+          <TooltipIconButton
+            icon={ShieldPlus}
+            label={`Alterar perfil de ${user.name}`}
+            className="border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-900 dark:text-orange-300 dark:hover:bg-orange-950/30"
+          />
         </span>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Alterar perfil de {user.name}</DialogTitle>
+          <DialogDescription>
+            Esta ação representa o fluxo separado de alteração de perfil.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
@@ -391,31 +337,13 @@ function ChangeRoleDialog({
 
 function ConfirmUserDeletion({ user, onConfirm }: { user: User; onConfirm: () => void }) {
   return (
-    <AlertDialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="destructive" size="icon-sm" aria-label={`Excluir usuário ${user.name}`}>
-              <Trash2 className="size-4" />
-            </Button>
-          </AlertDialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Excluir usuário</TooltipContent>
-      </Tooltip>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
-          <AlertDialogDescription>
-            O usuário {user.name} será removido apenas do estado local desta interface.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-600 text-white hover:bg-red-700" onClick={onConfirm}>
-            Excluir
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmIconButton
+      icon={Trash2}
+      label={`Excluir usuário ${user.name}`}
+      title="Excluir usuário?"
+      description={`O usuário ${user.name} será removido apenas do estado local desta interface.`}
+      confirmLabel="Excluir"
+      onConfirm={onConfirm}
+    />
   );
 }
