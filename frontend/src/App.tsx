@@ -1,3 +1,19 @@
+import { BrowserRouter } from 'react-router-dom';
+import { AppRouter } from '@/app/router';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { MockDataProvider } from '@/contexts/MockDataContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+
 export function App() {
-  return <h1 className='text-3xl font-bold'>Reimbursements App</h1>;
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <MockDataProvider>
+            <AppRouter />
+          </MockDataProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
 }
