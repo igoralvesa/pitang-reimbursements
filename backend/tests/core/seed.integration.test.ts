@@ -10,6 +10,7 @@ import {
   defaultReimbursement,
   seedCategories,
   seedDefaultData,
+  seedReimbursements,
 } from '../../src/core/seed';
 import { Role } from '../../src/types/roles-enum';
 import { cleanDatabase, disconnectDatabase } from '../helpers/database';
@@ -23,7 +24,7 @@ describe('Seed data', () => {
     await disconnectDatabase();
   });
 
-  it('creates default users, categories, reimbursement and history', async () => {
+  it('creates default users, categories, reimbursements and history without attachments', async () => {
     await seedDefaultData();
 
     const collaborator = await prisma.user.findUnique({
@@ -72,6 +73,40 @@ describe('Seed data', () => {
       status: ReimbursementStatus.DRAFT,
     });
 
+    const reimbursements = await prisma.reimbursementRequest.findMany({
+      where: {
+        description: {
+          in: seedReimbursements.map(
+            (seedReimbursement) => seedReimbursement.description,
+          ),
+        },
+        requesterId: collaborator!.id,
+      },
+    });
+
+    expect(reimbursements).toHaveLength(seedReimbursements.length);
+    expect(reimbursements).toEqual(
+      expect.arrayContaining(
+        seedReimbursements.map((seedReimbursement) =>
+          expect.objectContaining({
+            description: seedReimbursement.description,
+            rejectionReason: seedReimbursement.rejectionReason,
+            status: seedReimbursement.status,
+          }),
+        ),
+      ),
+    );
+
+    const attachments = await prisma.attachment.findMany({
+      where: {
+        reimbursementRequestId: {
+          in: reimbursements.map((seededReimbursement) => seededReimbursement.id),
+        },
+      },
+    });
+
+    expect(attachments).toHaveLength(0);
+
     const history = await prisma.reimbursementHistory.findFirst({
       where: {
         action: ReimbursementHistoryAction.CREATED,
@@ -85,7 +120,7 @@ describe('Seed data', () => {
     });
   });
 
-  it('does not duplicate default categories or reimbursement when run more than once', async () => {
+  it('does not duplicate default categories or reimbursements when run more than once', async () => {
     await seedDefaultData();
     await seedDefaultData();
 
@@ -93,7 +128,13 @@ describe('Seed data', () => {
       where: { name: defaultCategory.name },
     });
     const reimbursements = await prisma.reimbursementRequest.findMany({
-      where: { description: defaultReimbursement.description },
+      where: {
+        description: {
+          in: seedReimbursements.map(
+            (seedReimbursement) => seedReimbursement.description,
+          ),
+        },
+      },
     });
     const histories = await prisma.reimbursementHistory.findMany({
       where: { action: ReimbursementHistoryAction.CREATED },
@@ -108,7 +149,7 @@ describe('Seed data', () => {
 
     expect(categories).toHaveLength(1);
     expect(seededCategories).toHaveLength(seedCategories.length);
-    expect(reimbursements).toHaveLength(1);
-    expect(histories).toHaveLength(1);
+    expect(reimbursements).toHaveLength(seedReimbursements.length);
+    expect(histories).toHaveLength(seedReimbursements.length);
   });
 });

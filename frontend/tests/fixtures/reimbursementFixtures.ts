@@ -1,6 +1,6 @@
 import type { Category, ReimbursementRequest, User } from '@/types/domain';
 
-export const mockUsers: User[] = [
+export const fixtureUsers: User[] = [
   {
     id: 'user-ana',
     name: 'Ana Carvalho',
@@ -43,7 +43,7 @@ export const mockUsers: User[] = [
   },
 ];
 
-export const mockCategories: Category[] = [
+export const fixtureCategories: Category[] = [
   {
     id: 'cat-transport',
     name: 'Transporte',
@@ -74,7 +74,7 @@ export const mockCategories: Category[] = [
   },
 ];
 
-export const mockRequests: ReimbursementRequest[] = [
+export const fixtureRequests: ReimbursementRequest[] = [
   {
     id: 'REQ-1001',
     ownerId: 'user-ana',

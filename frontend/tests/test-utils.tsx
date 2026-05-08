@@ -9,7 +9,11 @@ import {
 import { httpClient } from '@/services/httpClient';
 import { App } from '../src/App';
 import { queryClient } from '../src/lib/queryClient';
-import { mockCategories, mockRequests, mockUsers } from '../src/mocks/mockData';
+import {
+  fixtureCategories as mockCategories,
+  fixtureRequests as mockRequests,
+  fixtureUsers as mockUsers,
+} from './fixtures/reimbursementFixtures';
 import type {
   Attachment,
   ReimbursementRequest as ApiReimbursementRequest,

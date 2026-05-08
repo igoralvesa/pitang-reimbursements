@@ -185,8 +185,3 @@ A única rota pública de negócio é `POST /auth/login`. As demais rotas exigem
 - `GET /reimbursements/:id/history`: consulta histórico
 - `POST /reimbursements/:id/attachments`: envia anexo, somente dono colaborador em rascunho
 - `GET /reimbursements/:id/attachments`: lista anexos
-
-## Pendente ou opcional
-
-- Refresh token
-- Recuperação de senha
