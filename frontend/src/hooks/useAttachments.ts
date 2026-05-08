@@ -8,10 +8,11 @@ type UploadAttachmentVariables = {
   payload: UploadAttachmentPayload;
 };
 
-export function useReimbursementAttachments(reimbursementId: string) {
+export function useReimbursementAttachments(reimbursementId?: string) {
   return useQuery({
-    queryKey: queryKeys.reimbursements.attachments(reimbursementId),
-    queryFn: () => attachmentService.listReimbursementAttachments(reimbursementId),
+    queryKey: queryKeys.reimbursements.attachments(reimbursementId ?? ''),
+    queryFn: () => attachmentService.listReimbursementAttachments(reimbursementId ?? ''),
+    enabled: Boolean(reimbursementId),
   });
 }
 

@@ -37,4 +37,18 @@ describe('reimbursement detail', () => {
       );
     });
   });
+
+  it('renderiza anexos vindos do endpoint de anexos', async () => {
+    authenticateAs('COLLABORATOR');
+    renderAt('/requests/REQ-1001');
+
+    expect(await screen.findByText(/Detalhes da solicitação REQ-1001/i)).toBeInTheDocument();
+    expect(await screen.findByText('recibo-uber.pdf')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements/REQ-1001/attachments',
+      );
+    });
+  });
 });

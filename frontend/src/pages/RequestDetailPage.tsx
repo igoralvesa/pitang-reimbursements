@@ -8,6 +8,7 @@ import { ReimbursementDetailCard } from '@/components/reimbursements/Reimburseme
 import { ReimbursementHistoryCard } from '@/components/reimbursements/ReimbursementHistoryCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useReimbursementAttachments } from '@/hooks/useAttachments';
 import { useReimbursement, useReimbursementHistory } from '@/hooks/useReimbursements';
 import { getApiErrorMessage } from '@/lib/apiError';
 
@@ -15,8 +16,10 @@ export function RequestDetailPage() {
   const { id } = useParams();
   const reimbursementQuery = useReimbursement(id);
   const historyQuery = useReimbursementHistory(id);
+  const attachmentsQuery = useReimbursementAttachments(id);
   const reimbursement = reimbursementQuery.data;
   const history = historyQuery.data ?? [];
+  const attachments = attachmentsQuery.data ?? [];
 
   const actorNamesById = useMemo(() => {
     const names: Record<string, string> = {};
@@ -82,7 +85,7 @@ export function RequestDetailPage() {
       </section>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_1fr]'>
-        <ReimbursementAttachmentsCard attachments={reimbursement.attachments ?? []} />
+        <ReimbursementAttachmentsCard attachments={attachments} />
         <ReimbursementHistoryCard
           actorNamesById={actorNamesById}
           entries={history}

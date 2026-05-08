@@ -1,3 +1,5 @@
+import { CircleDot, Tags, UserRound } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -35,8 +37,8 @@ export function ReimbursementFilters({
   statusOptions: RequestStatus[];
 }) {
   return (
-    <div className='grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3 dark:border-zinc-800 dark:bg-zinc-900'>
-      <FilterField label='Categoria'>
+    <div className='grid gap-3 rounded-lg border border-orange-100 bg-orange-50/35 p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3 dark:border-orange-950/60 dark:bg-orange-950/10'>
+      <FilterField icon={Tags} label='Categoria'>
         <Select
           value={categoryId || ALL_VALUE}
           onValueChange={(value) => onCategoryChange(value === ALL_VALUE ? '' : value)}
@@ -55,7 +57,7 @@ export function ReimbursementFilters({
         </Select>
       </FilterField>
 
-      <FilterField label='Status'>
+      <FilterField icon={CircleDot} label='Status'>
         <Select
           value={status || ALL_VALUE}
           onValueChange={(value) =>
@@ -77,7 +79,7 @@ export function ReimbursementFilters({
       </FilterField>
 
       {showCollaboratorFilter ? (
-        <FilterField label='Colaborador'>
+        <FilterField icon={UserRound} label='Colaborador'>
           <Select
             value={collaboratorId || ALL_VALUE}
             onValueChange={(value) =>
@@ -104,14 +106,21 @@ export function ReimbursementFilters({
 
 function FilterField({
   children,
+  icon: Icon,
   label,
 }: {
   children: ReactNode;
+  icon: LucideIcon;
   label: string;
 }) {
   return (
     <label className='space-y-2 text-sm font-medium text-zinc-700 dark:text-zinc-200'>
-      <span>{label}</span>
+      <span className='flex items-center gap-2'>
+        <span className='rounded-md bg-orange-100 p-1 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300'>
+          <Icon className='size-3.5' />
+        </span>
+        {label}
+      </span>
       {children}
     </label>
   );

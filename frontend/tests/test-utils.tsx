@@ -188,6 +188,21 @@ function mockGetRequest(url: string, config?: { params?: Record<string, unknown>
     });
   }
 
+  const attachmentsMatch = url.match(/^\/reimbursements\/([^/]+)\/attachments$/);
+
+  if (attachmentsMatch) {
+    const request = mockRequests.find((item) => item.id === attachmentsMatch[1]) ?? mockRequests[0];
+
+    return Promise.resolve({
+      data: request.attachments.map((attachment) => ({
+        ...attachment,
+        cloudinaryPublicId: null,
+        createdAt: request.createdAt,
+        reimbursementId: request.id,
+      })),
+    });
+  }
+
   return Promise.resolve({ data: undefined });
 }
 

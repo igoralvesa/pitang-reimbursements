@@ -1,4 +1,11 @@
-import { CalendarDays, CircleDollarSign, ClipboardList, Tag, UserRound } from 'lucide-react';
+import {
+  CalendarDays,
+  CircleDollarSign,
+  ClipboardList,
+  FileText,
+  Tag,
+  UserRound,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { TableState } from '@/components/TableState';
@@ -40,12 +47,17 @@ export function ReimbursementCards({
       {reimbursements.map((request) => (
         <Card
           key={request.id}
-          className='border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900'
+          className='border-l-4 border-zinc-200 border-l-orange-500 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md dark:border-zinc-800 dark:border-l-orange-500 dark:bg-zinc-900'
         >
           <Link to={`/requests/${request.id}`} className='block text-left'>
             <CardHeader>
               <CardTitle className='flex flex-wrap items-center gap-2 text-zinc-950 dark:text-zinc-50'>
-                {request.id}
+                <span className='inline-flex items-center gap-2'>
+                  <span className='rounded-md bg-orange-100 p-1.5 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300'>
+                    <FileText className='size-4' />
+                  </span>
+                  {request.id}
+                </span>
                 <ReimbursementStatusBadge status={request.status} />
               </CardTitle>
               <p className='line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400'>
@@ -53,22 +65,22 @@ export function ReimbursementCards({
               </p>
             </CardHeader>
             <CardContent className='grid gap-3 text-sm text-zinc-600 sm:grid-cols-2 dark:text-zinc-300'>
-              <div className='flex items-center gap-2'>
-                <CircleDollarSign className='size-4 text-orange-700' />
+              <div className='flex items-center gap-2 rounded-md bg-orange-50 px-2.5 py-2 dark:bg-orange-950/20'>
+                <CircleDollarSign className='size-4 text-orange-700 dark:text-orange-300' />
                 <span className='font-semibold text-zinc-950 dark:text-zinc-50'>
                   {formatCurrency(Number(request.amount))}
                 </span>
               </div>
-              <div className='flex items-center gap-2'>
-                <Tag className='size-4 text-orange-700' />
+              <div className='flex items-center gap-2 rounded-md bg-zinc-50 px-2.5 py-2 dark:bg-zinc-950/50'>
+                <Tag className='size-4 text-orange-700 dark:text-orange-300' />
                 <span>{request.category?.name ?? 'Sem categoria'}</span>
               </div>
-              <div className='flex items-center gap-2'>
-                <CalendarDays className='size-4 text-orange-700' />
+              <div className='flex items-center gap-2 rounded-md bg-zinc-50 px-2.5 py-2 dark:bg-zinc-950/50'>
+                <CalendarDays className='size-4 text-orange-700 dark:text-orange-300' />
                 <span>{formatDate(request.expenseDate)}</span>
               </div>
-              <div className='flex items-center gap-2 truncate text-zinc-500 dark:text-zinc-400'>
-                <UserRound className='size-4 shrink-0 text-orange-700' />
+              <div className='flex items-center gap-2 truncate rounded-md bg-zinc-50 px-2.5 py-2 text-zinc-500 dark:bg-zinc-950/50 dark:text-zinc-400'>
+                <UserRound className='size-4 shrink-0 text-orange-700 dark:text-orange-300' />
                 <span className='truncate'>
                   Solicitante: {request.requester?.name ?? 'Desconhecido'}
                 </span>
@@ -78,8 +90,8 @@ export function ReimbursementCards({
               </div>
             </CardContent>
           </Link>
-          <CardFooter className='justify-end bg-zinc-50 dark:bg-zinc-950/60'>
-            <Button asChild variant='outline' size='sm'>
+          <CardFooter className='justify-end bg-orange-50/40 dark:bg-orange-950/10'>
+            <Button asChild variant='outline' size='sm' className='border-orange-200 text-orange-800 hover:bg-orange-50 dark:border-orange-900 dark:text-orange-300 dark:hover:bg-orange-950/30'>
               <Link to={`/requests/${request.id}`}>Ver detalhes</Link>
             </Button>
           </CardFooter>

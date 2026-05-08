@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { ClipboardList, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
@@ -176,16 +176,21 @@ function PageHeader({
 }) {
   return (
     <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-end'>
-      <div className='text-left'>
-        <p className='text-xs font-semibold uppercase tracking-[0.18em] text-orange-700'>
-          Dashboard de {roleLabels[userRole].toLowerCase()}
-        </p>
-        <h1 className='mt-2 text-3xl font-semibold text-zinc-950 dark:text-zinc-50'>
-          Solicitações de reembolso
-        </h1>
-        <p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>
-          Solicitações filtradas conforme o perfil autenticado.
-        </p>
+      <div className='flex items-start gap-4 text-left'>
+        <div className='rounded-xl bg-orange-100 p-3 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300'>
+          <ClipboardList className='size-7' />
+        </div>
+        <div>
+          <p className='text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300'>
+            Dashboard de {roleLabels[userRole].toLowerCase()}
+          </p>
+          <h1 className='mt-2 text-3xl font-semibold text-zinc-950 dark:text-zinc-50'>
+            Solicitações de reembolso
+          </h1>
+          <p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>
+            Solicitações filtradas conforme o perfil autenticado.
+          </p>
+        </div>
       </div>
       {canCreate ? (
         <Button asChild className='bg-orange-600 hover:bg-orange-700'>

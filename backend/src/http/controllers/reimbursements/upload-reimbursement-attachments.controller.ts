@@ -2,7 +2,10 @@ import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
 
-import { ReimbursementStatus } from '../../../../generated/prisma/client';
+import {
+  ReimbursementHistoryAction,
+  ReimbursementStatus,
+} from '../../../../generated/prisma/client';
 import { cloudinary } from '@/config/cloudinary';
 import { logger } from '@/core/Logger';
 import { prisma } from '@/core/prisma';
@@ -79,7 +82,9 @@ function uploadToCloudinary({
         if (error) {
           return reject(
             new CloudinaryUploadError(
-              error instanceof Error ? error.message : 'Cloudinary upload failed',
+              error instanceof Error
+                ? error.message
+                : 'Cloudinary upload failed',
               getCloudinaryStatusCode(error),
             ),
           );
@@ -164,16 +169,27 @@ export async function uploadReimbursementAttachments(
       originalName: request.file.originalname,
     });
 
-    const attachment = await prisma.attachment.create({
-      data: {
-        fileName: request.file.originalname,
-        fileType: request.file.mimetype,
-        fileUrl: cloudinaryResult.secure_url,
-        publicId: cloudinaryResult.public_id,
-        reimbursementRequestId: reimbursement.id,
-        size: request.file.size,
-      },
-    });
+    const [attachment] = await prisma.$transaction([
+      prisma.attachment.create({
+        data: {
+          fileName: request.file.originalname,
+          fileType: request.file.mimetype,
+          fileUrl: cloudinaryResult.secure_url,
+          publicId: cloudinaryResult.public_id,
+          reimbursementRequestId: reimbursement.id,
+          size: request.file.size,
+        },
+      }),
+
+      prisma.reimbursementHistory.create({
+        data: {
+          reimbursementRequestId: reimbursement.id,
+          action: ReimbursementHistoryAction.UPDATED,
+          observation: `Anexo adicionado: ${request.file.originalname}`,
+          userId: loggedUser.id,
+        },
+      }),
+    ]);
 
     return response.status(201).json({
       cloudinaryPublicId: attachment.publicId,
