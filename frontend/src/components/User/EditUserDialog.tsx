@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { type UserEditFormValues } from '@/components/user/userManagementTypes';
+import { type UserEditFormValues } from '@/components/User/userManagementTypes';
 import { updateUserSchema } from '@/schemas/userSchema';
 import type { User } from '@/types/api';
 

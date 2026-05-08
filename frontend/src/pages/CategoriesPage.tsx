@@ -6,8 +6,8 @@ import { AdminTableCard } from '@/components/admin/AdminTableCard';
 import {
   CategoryDialog,
   type CategoryFormValues,
-} from '@/components/category/CategoryDialog';
-import { CategoryTable } from '@/components/category/CategoryTable';
+} from '@/components/Category/CategoryDialog';
+import { CategoryTable } from '@/components/Category/CategoryTable';
 import { ErrorFeedback } from '@/components/ErrorFeedback';
 import { Feedback } from '@/components/Feedback';
 import { TooltipProvider } from '@/components/ui/tooltip';

@@ -4,8 +4,8 @@ import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import {
   CategoryDialog,
   type CategoryFormValues,
-} from '@/components/category/CategoryDialog';
-import { CategoryStatusBadge } from '@/components/category/CategoryStatusBadge';
+} from '@/components/Category/CategoryDialog';
+import { CategoryStatusBadge } from '@/components/Category/CategoryStatusBadge';
 import { PaginationControls } from '@/components/PaginationControls';
 import { TableState } from '@/components/TableState';
 import {

@@ -6,13 +6,13 @@ import { AdminTableCard } from '@/components/admin/AdminTableCard';
 import { ErrorFeedback } from '@/components/ErrorFeedback';
 import { Feedback } from '@/components/Feedback';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { CreateUserDialog } from '@/components/user/CreateUserDialog';
-import { UsersTable } from '@/components/user/UsersTable';
+import { CreateUserDialog } from '@/components/User/CreateUserDialog';
+import { UsersTable } from '@/components/User/UsersTable';
 import type {
   RoleFormValues,
   UserEditFormValues,
   UserFormValues,
-} from '@/components/user/userManagementTypes';
+} from '@/components/User/userManagementTypes';
 import {
   useCreateUser,
   useDeleteUser,

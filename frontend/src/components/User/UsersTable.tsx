@@ -12,12 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ChangeRoleDialog } from '@/components/user/ChangeRoleDialog';
-import { EditUserDialog } from '@/components/user/EditUserDialog';
+import { ChangeRoleDialog } from '@/components/User/ChangeRoleDialog';
+import { EditUserDialog } from '@/components/User/EditUserDialog';
 import type {
   RoleFormValues,
   UserEditFormValues,
-} from '@/components/user/userManagementTypes';
+} from '@/components/User/userManagementTypes';
 import { formatDateTime } from '@/lib/date';
 import type { PaginationMeta, PromoteUserPayload, User } from '@/types/api';
 

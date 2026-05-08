@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import {
   roles,
   type RoleFormValues,
-} from '@/components/user/userManagementTypes';
+} from '@/components/User/userManagementTypes';
 import { roleLabels } from '@/lib/formatters';
 import { promoteUserSchema } from '@/schemas/userSchema';
 import type { PromoteUserPayload, User } from '@/types/api';

@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import {
   roles,
   type UserFormValues,
-} from '@/components/user/userManagementTypes';
+} from '@/components/User/userManagementTypes';
 import { roleLabels } from '@/lib/formatters';
 import { createUserSchema } from '@/schemas/userSchema';
 
