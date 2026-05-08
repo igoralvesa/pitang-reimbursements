@@ -16,7 +16,6 @@ import type {
   UserSummary,
 } from '@/types/api';
 import { reimbursementStatusLabels } from './reimbursementOptions';
-import { useAuth } from '@/hooks/useAuth';
 
 const ALL_VALUE = 'ALL';
 
@@ -51,10 +50,6 @@ export function ReimbursementFilters({
   status: RequestStatus | '';
   statusOptions: RequestStatus[];
 }) {
-  const { user } = useAuth();
-  const role = user?.role;
-  const canUseAllStatusOption = role === 'ADMIN' || role === 'COLLABORATOR';
-
   return (
     <div className='grid gap-3 rounded-lg border border-orange-100 bg-orange-50/35 p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4 dark:border-orange-950/60 dark:bg-orange-950/10'>
       <FilterField icon={Tags} label='Categoria'>
@@ -80,7 +75,7 @@ export function ReimbursementFilters({
 
       <FilterField icon={CircleDot} label='Status'>
         <Select
-          value={status || (canUseAllStatusOption ? ALL_VALUE : undefined)}
+          value={status || ALL_VALUE}
           onValueChange={(value) =>
             onStatusChange(value === ALL_VALUE ? '' : (value as RequestStatus))
           }
@@ -89,9 +84,7 @@ export function ReimbursementFilters({
             <SelectValue placeholder={'Todos os status'} />
           </SelectTrigger>
           <SelectContent>
-            {canUseAllStatusOption && (
-              <SelectItem value={ALL_VALUE}>Todos os status</SelectItem>
-            )}
+            <SelectItem value={ALL_VALUE}>Todos os status</SelectItem>
             {statusOptions.map((option) => (
               <SelectItem key={option} value={option}>
                 {reimbursementStatusLabels[option]}

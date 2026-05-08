@@ -204,6 +204,7 @@ describe('dashboard list', () => {
     expect(within(listbox).getByRole('option', { name: 'Enviado' })).toBeInTheDocument();
     expect(within(listbox).getByRole('option', { name: 'Aprovado' })).toBeInTheDocument();
     expect(within(listbox).getByRole('option', { name: 'Rejeitado' })).toBeInTheDocument();
+    expect(within(listbox).getByRole('option', { name: 'Todos os status' })).toBeInTheDocument();
     expect(within(listbox).queryByRole('option', { name: 'Rascunho' })).not.toBeInTheDocument();
     expect(within(listbox).queryByRole('option', { name: 'Pago' })).not.toBeInTheDocument();
   });
@@ -220,8 +221,77 @@ describe('dashboard list', () => {
 
     expect(within(listbox).getByRole('option', { name: 'Aprovado' })).toBeInTheDocument();
     expect(within(listbox).getByRole('option', { name: 'Pago' })).toBeInTheDocument();
+    expect(within(listbox).getByRole('option', { name: 'Todos os status' })).toBeInTheDocument();
     expect(within(listbox).queryByRole('option', { name: 'Enviado' })).not.toBeInTheDocument();
     expect(within(listbox).queryByRole('option', { name: 'Rejeitado' })).not.toBeInTheDocument();
+  });
+
+  it('permite gestor voltar para todos os status sem enviar filtro de status', async () => {
+    authenticateAs('MANAGER');
+    const user = userEvent.setup();
+    renderAt('/dashboard');
+
+    expect(await screen.findByText('REQ-1002')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: 'Aprovado' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements',
+        expect.objectContaining({
+          params: expect.objectContaining({ status: 'APPROVED' }),
+        }),
+      );
+    });
+
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: 'Todos os status' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements',
+        expect.objectContaining({
+          params: expect.not.objectContaining({
+            status: expect.anything(),
+          }),
+        }),
+      );
+    });
+  });
+
+  it('permite financeiro voltar para todos os status sem enviar filtro de status', async () => {
+    authenticateAs('FINANCE');
+    const user = userEvent.setup();
+    renderAt('/dashboard');
+
+    expect(await screen.findByText('REQ-1003')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: 'Pago' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements',
+        expect.objectContaining({
+          params: expect.objectContaining({ status: 'PAID' }),
+        }),
+      );
+    });
+
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: 'Todos os status' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements',
+        expect.objectContaining({
+          params: expect.not.objectContaining({
+            status: expect.anything(),
+          }),
+        }),
+      );
+    });
   });
 
   it('carrega mais solicitações usando os metadados de paginação da API', async () => {
