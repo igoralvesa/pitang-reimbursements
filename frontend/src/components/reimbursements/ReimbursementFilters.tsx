@@ -1,4 +1,4 @@
-import { CircleDot, Tags, UserRound } from 'lucide-react';
+import { ArrowUpDown, CalendarDays, CircleDot, Tags, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Select,
@@ -8,8 +8,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { ReactNode } from 'react';
-import type { Category, RequestStatus, UserSummary } from '@/types/api';
+import type {
+  Category,
+  ReimbursementSortBy,
+  RequestStatus,
+  SortOrder,
+  UserSummary,
+} from '@/types/api';
 import { reimbursementStatusLabels } from './reimbursementOptions';
+import { useAuth } from '@/hooks/useAuth';
 
 const ALL_VALUE = 'ALL';
 
@@ -20,8 +27,12 @@ export function ReimbursementFilters({
   collaborators,
   onCategoryChange,
   onCollaboratorChange,
+  onSortByChange,
+  onSortOrderChange,
   onStatusChange,
   showCollaboratorFilter,
+  sortBy,
+  sortOrder,
   status,
   statusOptions,
 }: {
@@ -31,17 +42,27 @@ export function ReimbursementFilters({
   collaborators: UserSummary[];
   onCategoryChange: (categoryId: string) => void;
   onCollaboratorChange: (collaboratorId: string) => void;
+  onSortByChange: (sortBy: ReimbursementSortBy) => void;
+  onSortOrderChange: (sortOrder: SortOrder) => void;
   onStatusChange: (status: RequestStatus | '') => void;
   showCollaboratorFilter: boolean;
+  sortBy: ReimbursementSortBy;
+  sortOrder: SortOrder;
   status: RequestStatus | '';
   statusOptions: RequestStatus[];
 }) {
+  const { user } = useAuth();
+  const role = user?.role;
+  const canUseAllStatusOption = role === 'ADMIN' || role === 'COLLABORATOR';
+
   return (
-    <div className='grid gap-3 rounded-lg border border-orange-100 bg-orange-50/35 p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3 dark:border-orange-950/60 dark:bg-orange-950/10'>
+    <div className='grid gap-3 rounded-lg border border-orange-100 bg-orange-50/35 p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4 dark:border-orange-950/60 dark:bg-orange-950/10'>
       <FilterField icon={Tags} label='Categoria'>
         <Select
           value={categoryId || ALL_VALUE}
-          onValueChange={(value) => onCategoryChange(value === ALL_VALUE ? '' : value)}
+          onValueChange={(value) =>
+            onCategoryChange(value === ALL_VALUE ? '' : value)
+          }
         >
           <SelectTrigger className='w-full'>
             <SelectValue placeholder='Todas as categorias' />
@@ -59,16 +80,18 @@ export function ReimbursementFilters({
 
       <FilterField icon={CircleDot} label='Status'>
         <Select
-          value={status || ALL_VALUE}
+          value={status || (canUseAllStatusOption ? ALL_VALUE : undefined)}
           onValueChange={(value) =>
             onStatusChange(value === ALL_VALUE ? '' : (value as RequestStatus))
           }
         >
           <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Todos os status' />
+            <SelectValue placeholder={'Todos os status'} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todos os status</SelectItem>
+            {canUseAllStatusOption && (
+              <SelectItem value={ALL_VALUE}>Todos os status</SelectItem>
+            )}
             {statusOptions.map((option) => (
               <SelectItem key={option} value={option}>
                 {reimbursementStatusLabels[option]}
@@ -100,6 +123,37 @@ export function ReimbursementFilters({
           </Select>
         </FilterField>
       ) : null}
+
+      <FilterField icon={CalendarDays} label='Ordenar por'>
+        <Select
+          value={sortBy}
+          onValueChange={(value) => onSortByChange(value as ReimbursementSortBy)}
+        >
+          <SelectTrigger className='w-full'>
+            <SelectValue placeholder='Ordenar por' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='createdAt'>Criação</SelectItem>
+            <SelectItem value='expenseDate'>Data da despesa</SelectItem>
+            <SelectItem value='amount'>Valor</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterField>
+
+      <FilterField icon={ArrowUpDown} label='Ordem'>
+        <Select
+          value={sortOrder}
+          onValueChange={(value) => onSortOrderChange(value as SortOrder)}
+        >
+          <SelectTrigger className='w-full'>
+            <SelectValue placeholder='Ordem' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='desc'>Decrescente</SelectItem>
+            <SelectItem value='asc'>Crescente</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterField>
     </div>
   );
 }

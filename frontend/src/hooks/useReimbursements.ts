@@ -64,7 +64,8 @@ export function useUpdateReimbursement() {
   return useMutation({
     mutationFn: ({ id, payload }: UpdateReimbursementVariables) =>
       reimbursementService.updateReimbursement(id, payload),
-    onSuccess: (_reimbursement, variables) => {
+    onSuccess: (reimbursement, variables) => {
+      queryClient.setQueryData(queryKeys.reimbursements.detail(variables.id), reimbursement);
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.reimbursements.detail(variables.id),

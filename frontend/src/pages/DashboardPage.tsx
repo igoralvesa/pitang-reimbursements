@@ -21,7 +21,9 @@ import type {
   PaginatedResponse,
   PaginationMeta,
   ReimbursementRequest,
+  ReimbursementSortBy,
   RequestStatus,
+  SortOrder,
 } from '@/types/api';
 
 const PAGE_SIZE = 10;
@@ -40,6 +42,8 @@ export function DashboardPage() {
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState<RequestStatus | ''>('');
   const [collaboratorId, setCollaboratorId] = useState('');
+  const [sortBy, setSortBy] = useState<ReimbursementSortBy>('createdAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const statusOptions = useMemo(
     () => (user ? getStatusOptionsForRole(user.role) : []),
@@ -53,8 +57,10 @@ export function DashboardPage() {
       status: status || undefined,
       collaboratorId:
         user?.role !== 'COLLABORATOR' && collaboratorId ? collaboratorId : undefined,
+      sortBy,
+      sortOrder,
     }),
-    [categoryId, collaboratorId, status, user?.role],
+    [categoryId, collaboratorId, sortBy, sortOrder, status, user?.role],
   );
 
   const reimbursementParams = useMemo<GetReimbursementsParams>(
@@ -135,6 +141,8 @@ export function DashboardPage() {
         collaboratorId={collaboratorId}
         collaborators={collaborators}
         showCollaboratorFilter={showCollaboratorFilter}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
         status={status}
         statusOptions={statusOptions}
         onCategoryChange={(value) => {
@@ -143,6 +151,14 @@ export function DashboardPage() {
         }}
         onCollaboratorChange={(value) => {
           setCollaboratorId(value);
+          resetListAndPage();
+        }}
+        onSortByChange={(value) => {
+          setSortBy(value);
+          resetListAndPage();
+        }}
+        onSortOrderChange={(value) => {
+          setSortOrder(value);
           resetListAndPage();
         }}
         onStatusChange={(value) => {

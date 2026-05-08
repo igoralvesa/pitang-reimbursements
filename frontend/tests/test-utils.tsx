@@ -10,6 +10,10 @@ import { httpClient } from '@/services/httpClient';
 import { App } from '../src/App';
 import { queryClient } from '../src/lib/queryClient';
 import { mockCategories, mockRequests, mockUsers } from '../src/mocks/mockData';
+import type {
+  Attachment,
+  ReimbursementRequest as ApiReimbursementRequest,
+} from '../src/types/api';
 import type { User, UserRole } from '../src/types/domain';
 
 jest.mock('@/services/httpClient', () => ({
@@ -46,6 +50,11 @@ export const mockLoginState: MockLoginState = {
   isError: false,
   isPending: false,
 };
+
+const reimbursementOverrides = new Map<string, ApiReimbursementRequest>();
+const attachmentOverrides = new Map<string, Attachment[]>();
+
+type ReimbursementAction = 'submit' | 'cancel' | 'approve' | 'reject' | 'pay';
 
 jest.mock('@/hooks/useLogin', () => ({
   useLogin: () => ({
@@ -115,6 +124,10 @@ export async function login() {
 export function setupAppTest() {
   beforeEach(() => {
     queryClient.clear();
+    queryClient.setDefaultOptions({
+      mutations: { retry: false },
+      queries: { retry: false },
+    });
     window.localStorage.clear();
     document.documentElement.classList.remove('dark');
     mockLoginState.isError = false;
@@ -128,6 +141,14 @@ export function setupAppTest() {
     jest
       .mocked(httpClient.get)
       .mockImplementation(mockGetRequest as unknown as typeof httpClient.get);
+    jest
+      .mocked(httpClient.post)
+      .mockImplementation(mockPostRequest as unknown as typeof httpClient.post);
+    jest
+      .mocked(httpClient.put)
+      .mockImplementation(mockPutRequest as unknown as typeof httpClient.put);
+    reimbursementOverrides.clear();
+    attachmentOverrides.clear();
     mockLoginMutation.mockResolvedValue({
       token: 'token-de-teste',
       user: usersByRole.COLLABORATOR,
@@ -165,9 +186,7 @@ function mockGetRequest(url: string, config?: { params?: Record<string, unknown>
   const detailMatch = url.match(/^\/reimbursements\/([^/]+)$/);
 
   if (detailMatch) {
-    const reimbursement = toApiRequest(
-      mockRequests.find((request) => request.id === detailMatch[1]) ?? mockRequests[0],
-    );
+    const reimbursement = getApiRequest(detailMatch[1]);
 
     return Promise.resolve({ data: reimbursement });
   }
@@ -192,15 +211,127 @@ function mockGetRequest(url: string, config?: { params?: Record<string, unknown>
 
   if (attachmentsMatch) {
     const request = mockRequests.find((item) => item.id === attachmentsMatch[1]) ?? mockRequests[0];
+    const overriddenAttachments = attachmentOverrides.get(request.id);
 
     return Promise.resolve({
-      data: request.attachments.map((attachment) => ({
+      data: overriddenAttachments ?? request.attachments.map((attachment) => ({
         ...attachment,
         cloudinaryPublicId: null,
         createdAt: request.createdAt,
         reimbursementId: request.id,
       })),
     });
+  }
+
+  return Promise.resolve({ data: undefined });
+}
+
+function mockPostRequest(url: string, body?: unknown) {
+  if (url === '/reimbursements') {
+    const payload = body as {
+      amount: number;
+      categoryId: string;
+      description: string;
+      expenseDate: string;
+    };
+    const currentUser = getCurrentUser() ?? usersByRole.COLLABORATOR;
+    const reimbursement: ApiReimbursementRequest = {
+      amount: payload.amount,
+      attachments: [],
+      category: mockCategories.find((category) => category.id === payload.categoryId),
+      categoryId: payload.categoryId,
+      createdAt: '2026-05-08T10:00:00.000Z',
+      description: payload.description,
+      expenseDate: payload.expenseDate,
+      histories: [],
+      id: 'REQ-CREATED',
+      rejectionReason: null,
+      requester: currentUser,
+      requesterId: currentUser.id,
+      status: 'DRAFT',
+      updatedAt: '2026-05-08T10:00:00.000Z',
+    };
+    reimbursementOverrides.set(reimbursement.id, reimbursement);
+
+    return Promise.resolve({ data: reimbursement });
+  }
+
+  const attachmentMatch = url.match(/^\/reimbursements\/([^/]+)\/attachments$/);
+
+  if (attachmentMatch) {
+    const reimbursementId = attachmentMatch[1];
+    const file = body instanceof FormData ? body.get('file') : null;
+    const attachment: Attachment = {
+      cloudinaryPublicId: 'attachment-uploaded-public-id',
+      createdAt: '2026-05-08T10:20:00.000Z',
+      fileName: file instanceof File ? file.name : 'comprovante.pdf',
+      fileType: 'PDF',
+      fileUrl: '#',
+      id: 'att-uploaded',
+      reimbursementId,
+    };
+    const currentAttachments =
+      attachmentOverrides.get(reimbursementId) ??
+      getApiRequest(reimbursementId).attachments ??
+      [];
+
+    attachmentOverrides.set(reimbursementId, [...currentAttachments, attachment]);
+
+    return Promise.resolve({ data: attachment });
+  }
+
+  const actionMatch = url.match(/^\/reimbursements\/([^/]+)\/(submit|cancel|approve|reject|pay)$/);
+
+  if (actionMatch) {
+    const reimbursement = getApiRequest(actionMatch[1]);
+    const action = actionMatch[2] as ReimbursementAction;
+    const statusByAction: Record<ReimbursementAction, ApiReimbursementRequest['status']> = {
+      approve: 'APPROVED',
+      cancel: 'CANCELED',
+      pay: 'PAID',
+      reject: 'REJECTED',
+      submit: 'SUBMITTED',
+    };
+    const rejectionReason =
+      action === 'reject' && isRecord(body) && typeof body.rejectionReason === 'string'
+        ? body.rejectionReason
+        : reimbursement.rejectionReason;
+    const updatedReimbursement: ApiReimbursementRequest = {
+      ...reimbursement,
+      rejectionReason,
+      status: statusByAction[action],
+      updatedAt: '2026-05-08T10:30:00.000Z',
+    };
+    reimbursementOverrides.set(updatedReimbursement.id, updatedReimbursement);
+
+    return Promise.resolve({ data: updatedReimbursement });
+  }
+
+  return Promise.resolve({ data: undefined });
+}
+
+function mockPutRequest(url: string, body?: unknown) {
+  const updateMatch = url.match(/^\/reimbursements\/([^/]+)$/);
+
+  if (updateMatch) {
+    const reimbursement = getApiRequest(updateMatch[1]);
+    const payload = body as Partial<
+      Pick<
+        ApiReimbursementRequest,
+        'amount' | 'categoryId' | 'description' | 'expenseDate'
+      >
+    >;
+    const updatedReimbursement: ApiReimbursementRequest = {
+      ...reimbursement,
+      amount: payload.amount ?? reimbursement.amount,
+      categoryId: payload.categoryId ?? reimbursement.categoryId,
+      description: payload.description ?? reimbursement.description,
+      expenseDate: payload.expenseDate ?? reimbursement.expenseDate,
+      updatedAt: '2026-05-08T10:45:00.000Z',
+    };
+    reimbursementOverrides.set(updatedReimbursement.id, updatedReimbursement);
+
+    return Promise.resolve({ data: updatedReimbursement });
   }
 
   return Promise.resolve({ data: undefined });
@@ -241,21 +372,23 @@ function filterRequests(params: Record<string, unknown>) {
     .map(toApiRequest);
 }
 
-function toApiRequest(request: (typeof mockRequests)[number]) {
+function toApiRequest(request: (typeof mockRequests)[number]): ApiReimbursementRequest {
   const requester = mockUsers.find((user) => user.id === request.ownerId);
   const category = mockCategories.find((item) => item.id === request.categoryId);
 
   return {
-    ...request,
-    requesterId: request.ownerId,
-    requester,
-    category,
+    amount: request.amount,
     attachments: request.attachments.map((attachment) => ({
       ...attachment,
       cloudinaryPublicId: null,
       createdAt: request.createdAt,
       reimbursementId: request.id,
     })),
+    category,
+    categoryId: request.categoryId,
+    createdAt: request.createdAt,
+    description: request.description,
+    expenseDate: request.expenseDate,
     histories: request.history.map((entry) => ({
       action: entry.action,
       createdAt: entry.createdAt,
@@ -264,7 +397,30 @@ function toApiRequest(request: (typeof mockRequests)[number]) {
       userId: entry.userId,
       user: mockUsers.find((user) => user.id === entry.userId),
     })),
+    id: request.id,
+    rejectionReason:
+      request.status === 'REJECTED'
+        ? request.history.find((entry) => entry.action === 'REJECTED')?.observation ?? null
+        : null,
+    requester,
+    requesterId: request.ownerId,
+    status: request.status,
+    updatedAt: request.updatedAt,
   };
+}
+
+function getApiRequest(id: string): ApiReimbursementRequest {
+  const overridden = reimbursementOverrides.get(id);
+
+  if (overridden) {
+    return overridden;
+  }
+
+  return toApiRequest(mockRequests.find((request) => request.id === id) ?? mockRequests[0]);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function paginate<T>(items: T[], params: Record<string, unknown>) {

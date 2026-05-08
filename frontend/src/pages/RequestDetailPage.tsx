@@ -1,22 +1,26 @@
 import { ArrowLeft } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
+import { Feedback } from '@/components/Feedback';
+import { ReimbursementActionsCard } from '@/components/reimbursements/ReimbursementActionsCard';
 import { ReimbursementAttachmentsCard } from '@/components/reimbursements/ReimbursementAttachmentsCard';
-import { ReimbursementConsultationCard } from '@/components/reimbursements/ReimbursementConsultationCard';
 import { ReimbursementDetailCard } from '@/components/reimbursements/ReimbursementDetailCard';
 import { ReimbursementHistoryCard } from '@/components/reimbursements/ReimbursementHistoryCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
 import { useReimbursementAttachments } from '@/hooks/useAttachments';
 import { useReimbursement, useReimbursementHistory } from '@/hooks/useReimbursements';
 import { getApiErrorMessage } from '@/lib/apiError';
 
 export function RequestDetailPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const reimbursementQuery = useReimbursement(id);
   const historyQuery = useReimbursementHistory(id);
   const attachmentsQuery = useReimbursementAttachments(id);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const reimbursement = reimbursementQuery.data;
   const history = historyQuery.data ?? [];
   const attachments = attachmentsQuery.data ?? [];
@@ -78,14 +82,26 @@ export function RequestDetailPage() {
   return (
     <div className='mx-auto max-w-6xl space-y-6'>
       <BackButton />
+      <Feedback message={feedback} />
 
       <section className='grid gap-4 lg:grid-cols-[1.6fr_0.9fr]'>
         <ReimbursementDetailCard reimbursement={reimbursement} />
-        <ReimbursementConsultationCard />
+        {user ? (
+          <ReimbursementActionsCard
+            reimbursement={reimbursement}
+            user={user}
+            onFeedback={setFeedback}
+          />
+        ) : null}
       </section>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_1fr]'>
-        <ReimbursementAttachmentsCard attachments={attachments} />
+        <ReimbursementAttachmentsCard
+          attachments={attachments}
+          reimbursement={reimbursement}
+          user={user}
+          onFeedback={setFeedback}
+        />
         <ReimbursementHistoryCard
           actorNamesById={actorNamesById}
           entries={history}

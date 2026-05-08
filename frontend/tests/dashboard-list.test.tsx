@@ -11,6 +11,91 @@ import {
 setupAppTest();
 
 describe('dashboard list', () => {
+  it('exibe ação de criar solicitação para colaborador', async () => {
+    authenticateAs('COLLABORATOR');
+    renderAt('/dashboard');
+
+    expect(await screen.findByRole('link', { name: /Nova solicitação/i })).toBeInTheDocument();
+  });
+
+  it('não exibe ação de criar solicitação para não colaborador', async () => {
+    authenticateAs('MANAGER');
+    renderAt('/dashboard');
+
+    expect(await screen.findByText('REQ-1002')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Nova solicitação/i })).not.toBeInTheDocument();
+  });
+
+  it('renderiza estado de carregamento da lista de solicitações', async () => {
+    authenticateAs('ADMIN');
+    jest.mocked(mockHttpClient.get).mockImplementation(
+      ((url: string) => {
+        if (url === '/reimbursements') {
+          return new Promise(() => undefined);
+        }
+
+        return Promise.resolve({
+          data: { data: [], meta: { page: 1, limit: 100, total: 0, totalPages: 0 } },
+        });
+      }) as unknown as typeof mockHttpClient.get,
+    );
+
+    renderAt('/dashboard');
+
+    expect(await screen.findByText(/Carregando solicitações/i)).toBeInTheDocument();
+  });
+
+  it('renderiza estado vazio quando a API não retorna solicitações', async () => {
+    authenticateAs('ADMIN');
+    jest.mocked(mockHttpClient.get).mockImplementation(
+      ((url: string, config?: { params?: Record<string, unknown> }) => {
+        if (url === '/reimbursements') {
+          return Promise.resolve({
+            data: {
+              data: [],
+              meta: {
+                page: Number(config?.params?.page ?? 1),
+                limit: Number(config?.params?.limit ?? 10),
+                total: 0,
+                totalPages: 0,
+              },
+            },
+          });
+        }
+
+        return Promise.resolve({
+          data: { data: [], meta: { page: 1, limit: 100, total: 0, totalPages: 0 } },
+        });
+      }) as unknown as typeof mockHttpClient.get,
+    );
+
+    renderAt('/dashboard');
+
+    expect(await screen.findByText(/Nenhuma solicitação disponível/i)).toBeInTheDocument();
+  });
+
+  it('renderiza erro quando a lista de solicitações falha', async () => {
+    authenticateAs('ADMIN');
+    jest.mocked(mockHttpClient.get).mockImplementation(
+      ((url: string) => {
+        if (url === '/reimbursements') {
+          return Promise.reject({ message: 'Não foi possível buscar solicitações' });
+        }
+
+        return Promise.resolve({
+          data: { data: [], meta: { page: 1, limit: 100, total: 0, totalPages: 0 } },
+        });
+      }) as unknown as typeof mockHttpClient.get,
+    );
+
+    renderAt('/dashboard');
+
+    expect(
+      await screen.findByText(/Não foi possível carregar as solicitações/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Não foi possível buscar solicitações/i)).toBeInTheDocument();
+  });
+
   it('envia paginação e filtros de status para a API', async () => {
     authenticateAs('ADMIN');
     const user = userEvent.setup();
@@ -29,6 +114,55 @@ describe('dashboard list', () => {
             limit: 10,
             page: 1,
             status: 'APPROVED',
+          }),
+        }),
+      );
+    });
+  });
+
+  it('envia ordenação por data e ordem para a API', async () => {
+    authenticateAs('ADMIN');
+    const user = userEvent.setup();
+    renderAt('/dashboard');
+
+    expect(await screen.findByText('REQ-1001')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Ordenar por' }));
+    await user.click(await screen.findByRole('option', { name: 'Data da despesa' }));
+    await user.click(screen.getByRole('combobox', { name: 'Ordem' }));
+    await user.click(await screen.findByRole('option', { name: 'Crescente' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements',
+        expect.objectContaining({
+          params: expect.objectContaining({
+            page: 1,
+            sortBy: 'expenseDate',
+            sortOrder: 'asc',
+          }),
+        }),
+      );
+    });
+  });
+
+  it('envia ordenação por valor para a API', async () => {
+    authenticateAs('ADMIN');
+    const user = userEvent.setup();
+    renderAt('/dashboard');
+
+    expect(await screen.findByText('REQ-1001')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Ordenar por' }));
+    await user.click(await screen.findByRole('option', { name: 'Valor' }));
+
+    await waitFor(() => {
+      expect(jest.mocked(mockHttpClient.get)).toHaveBeenCalledWith(
+        '/reimbursements',
+        expect.objectContaining({
+          params: expect.objectContaining({
+            sortBy: 'amount',
+            sortOrder: 'desc',
           }),
         }),
       );

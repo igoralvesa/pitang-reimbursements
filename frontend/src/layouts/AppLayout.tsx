@@ -65,7 +65,7 @@ export function AppLayout() {
               </div>
 
               <div className='flex min-w-0 items-center gap-3'>
-                <div className='hidden min-w-0 text-right sm:block'>
+                <div className='hidden min-w-0 text-center sm:block'>
                   <div className='truncate text-sm font-medium'>
                     {user?.name}
                   </div>
