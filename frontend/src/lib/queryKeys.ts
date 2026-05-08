@@ -1,4 +1,4 @@
-import type { GetCategoriesParams, GetUsersParams } from '@/types/api';
+import type { GetCategoriesParams, GetReimbursementsParams, GetUsersParams } from '@/types/api';
 
 export const queryKeys = {
   auth: {
@@ -15,7 +15,8 @@ export const queryKeys = {
   },
   reimbursements: {
     all: ['reimbursements'] as const,
-    lists: () => ['reimbursements', 'list'] as const,
+    lists: (params?: GetReimbursementsParams) =>
+      ['reimbursements', 'list', params ?? {}] as const,
     detail: (id: string) => ['reimbursements', 'detail', id] as const,
     history: (id: string) => ['reimbursements', 'history', id] as const,
     attachments: (id: string) => ['reimbursements', 'attachments', id] as const,

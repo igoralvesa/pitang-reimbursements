@@ -9,6 +9,7 @@ import {
 import { httpClient } from '@/services/httpClient';
 import { App } from '../src/App';
 import { queryClient } from '../src/lib/queryClient';
+import { mockCategories, mockRequests, mockUsers } from '../src/mocks/mockData';
 import type { User, UserRole } from '../src/types/domain';
 
 jest.mock('@/services/httpClient', () => ({
@@ -124,6 +125,9 @@ export function setupAppTest() {
     jest.mocked(httpClient.patch).mockReset();
     jest.mocked(httpClient.post).mockReset();
     jest.mocked(httpClient.put).mockReset();
+    jest
+      .mocked(httpClient.get)
+      .mockImplementation(mockGetRequest as unknown as typeof httpClient.get);
     mockLoginMutation.mockResolvedValue({
       token: 'token-de-teste',
       user: usersByRole.COLLABORATOR,
@@ -133,4 +137,134 @@ export function setupAppTest() {
   afterEach(() => {
     cleanup();
   });
+}
+
+function mockGetRequest(url: string, config?: { params?: Record<string, unknown> }) {
+  const params = config?.params ?? {};
+
+  if (url === '/categories') {
+    const name = typeof params.name === 'string' ? params.name.toLowerCase() : '';
+    const categories = mockCategories
+      .filter((category) => category.active)
+      .filter((category) => category.name.toLowerCase().includes(name));
+
+    return Promise.resolve({ data: paginate(categories, params) });
+  }
+
+  if (url === '/users') {
+    const role = typeof params.role === 'string' ? params.role : '';
+    const users = mockUsers.filter((user) => !role || user.role === role);
+
+    return Promise.resolve({ data: paginate(users, params) });
+  }
+
+  if (url === '/reimbursements') {
+    return Promise.resolve({ data: paginate(filterRequests(params), params) });
+  }
+
+  const detailMatch = url.match(/^\/reimbursements\/([^/]+)$/);
+
+  if (detailMatch) {
+    const reimbursement = toApiRequest(
+      mockRequests.find((request) => request.id === detailMatch[1]) ?? mockRequests[0],
+    );
+
+    return Promise.resolve({ data: reimbursement });
+  }
+
+  const historyMatch = url.match(/^\/reimbursements\/([^/]+)\/history$/);
+
+  if (historyMatch) {
+    const request = mockRequests.find((item) => item.id === historyMatch[1]) ?? mockRequests[0];
+
+    return Promise.resolve({
+      data: request.history.map((entry) => ({
+        action: entry.action,
+        createdAt: entry.createdAt,
+        observation: entry.observation,
+        reimbursementRequestId: entry.reimbursementId,
+        userId: entry.userId,
+      })),
+    });
+  }
+
+  return Promise.resolve({ data: undefined });
+}
+
+function getCurrentUser() {
+  const storedUser = window.localStorage.getItem('auth_user');
+
+  return storedUser ? (JSON.parse(storedUser) as User) : null;
+}
+
+function filterRequests(params: Record<string, unknown>) {
+  const currentUser = getCurrentUser();
+  const categoryId = typeof params.categoryId === 'string' ? params.categoryId : '';
+  const collaboratorId =
+    typeof params.collaboratorId === 'string' ? params.collaboratorId : '';
+  const status = typeof params.status === 'string' ? params.status : '';
+
+  return mockRequests
+    .filter((request) => {
+      if (currentUser?.role === 'COLLABORATOR') {
+        return request.ownerId === currentUser.id;
+      }
+
+      if (currentUser?.role === 'MANAGER') {
+        return ['SUBMITTED', 'APPROVED', 'REJECTED'].includes(request.status);
+      }
+
+      if (currentUser?.role === 'FINANCE') {
+        return ['APPROVED', 'PAID'].includes(request.status);
+      }
+
+      return true;
+    })
+    .filter((request) => !categoryId || request.categoryId === categoryId)
+    .filter((request) => !collaboratorId || request.ownerId === collaboratorId)
+    .filter((request) => !status || request.status === status)
+    .map(toApiRequest);
+}
+
+function toApiRequest(request: (typeof mockRequests)[number]) {
+  const requester = mockUsers.find((user) => user.id === request.ownerId);
+  const category = mockCategories.find((item) => item.id === request.categoryId);
+
+  return {
+    ...request,
+    requesterId: request.ownerId,
+    requester,
+    category,
+    attachments: request.attachments.map((attachment) => ({
+      ...attachment,
+      cloudinaryPublicId: null,
+      createdAt: request.createdAt,
+      reimbursementId: request.id,
+    })),
+    histories: request.history.map((entry) => ({
+      action: entry.action,
+      createdAt: entry.createdAt,
+      observation: entry.observation,
+      reimbursementRequestId: entry.reimbursementId,
+      userId: entry.userId,
+      user: mockUsers.find((user) => user.id === entry.userId),
+    })),
+  };
+}
+
+function paginate<T>(items: T[], params: Record<string, unknown>) {
+  const page = Number(params.page ?? 1);
+  const limit = Number(params.limit ?? 10);
+  const start = (page - 1) * limit;
+  const data = items.slice(start, start + limit);
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total: items.length,
+      totalPages: Math.ceil(items.length / limit),
+    },
+  };
 }

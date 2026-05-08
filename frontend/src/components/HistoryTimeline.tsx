@@ -4,7 +4,7 @@ import type { RequestHistory, User } from '@/types/domain';
 
 export function HistoryTimeline({ entries, users }: { entries: RequestHistory[]; users: User[] }) {
   return (
-    <div className="space-y-3">
+    <div className="max-h-[19.5rem] space-y-3 overflow-y-auto pr-1">
       {entries.map((entry) => {
         const actor = users.find((user) => user.id === entry.userId);
 

@@ -637,17 +637,72 @@ GET /categories?page=1&limit=10&name=trans
 - Authentication required: yes.
 - Allowed roles: `ADMIN`, `COLLABORATOR`, `MANAGER`, `FINANCE`.
 - Request params: none.
-- Query params: none.
+- Query params:
+  - `page?: number`, default `1`, positive integer.
+  - `limit?: number`, default `10`, positive integer, max `100`.
+  - `collaboratorId?: string`, UUID. Not allowed for `COLLABORATOR`.
+  - `categoryId?: string`, UUID.
+  - `status?: RequestStatus`.
+  - `sortBy?: 'createdAt' | 'expenseDate' | 'amount'`, default `createdAt`.
+  - `sortOrder?: 'asc' | 'desc'`, default `desc`.
 - Request body: none.
-- Validation rules: none.
-- Success response: `200 ReimbursementRequest[]` including `category` and
-  `requester`.
-- Possible error responses: `401`, `403`.
+- Validation rules: query params are validated with Zod; numeric params are
+  coerced because query params arrive as strings.
+- Success response: `200 PaginatedResponse<ReimbursementRequest>` including
+  `category` and `requester`.
+- Possible error responses: `400` Zod field errors or invalid collaborator
+  filter for collaborator users; `401`; `403` for role-forbidden status filters.
 - Important business rules: collaborator sees own requests; manager sees
   `SUBMITTED`, `APPROVED`, and `REJECTED`; finance sees `APPROVED` and `PAID`;
-  admin sees all. Results are ordered by `createdAt desc`.
-- Frontend notes: no server-side filters/pagination currently.
+  admin sees all. Filtering and RBAC restrictions happen before sorting and
+  pagination. If manager or finance sends a `status` outside their visible
+  statuses, the backend returns `403`. Results default to `createdAt desc`.
+- Frontend notes: frontend integration has not been updated yet in this change.
 - Source: `backend/src/http/controllers/reimbursements/get-reimbursements.controller.ts`.
+
+Example:
+
+```http
+GET /reimbursements?page=1&limit=10&status=APPROVED&sortBy=expenseDate&sortOrder=asc
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "00000000-0000-0000-0000-000000000100",
+      "requesterId": "00000000-0000-0000-0000-000000000001",
+      "categoryId": "00000000-0000-0000-0000-000000000010",
+      "description": "Táxi para reunião",
+      "amount": "120.75",
+      "expenseDate": "2026-05-01T00:00:00.000Z",
+      "status": "APPROVED",
+      "rejectionReason": null,
+      "createdAt": "2026-05-01T00:00:00.000Z",
+      "updatedAt": "2026-05-01T00:00:00.000Z",
+      "category": {
+        "id": "00000000-0000-0000-0000-000000000010",
+        "name": "Transporte",
+        "active": true,
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z"
+      },
+      "requester": {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "name": "Colaborador",
+        "email": "colaborador@email.com",
+        "role": "COLLABORATOR"
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
 
 ### POST /reimbursements
 

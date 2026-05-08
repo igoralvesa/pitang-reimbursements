@@ -4,10 +4,20 @@ import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { PaginationControls } from '@/components/PaginationControls';
 import { RoleBadge } from '@/components/RoleBadge';
 import { TableState } from '@/components/TableState';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ChangeRoleDialog } from '@/components/User/ChangeRoleDialog';
-import { EditUserDialog } from '@/components/User/EditUserDialog';
-import type { RoleFormValues, UserEditFormValues } from '@/components/User/userManagementTypes';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ChangeRoleDialog } from '@/components/user/ChangeRoleDialog';
+import { EditUserDialog } from '@/components/user/EditUserDialog';
+import type {
+  RoleFormValues,
+  UserEditFormValues,
+} from '@/components/user/userManagementTypes';
 import { formatDateTime } from '@/lib/date';
 import type { PaginationMeta, PromoteUserPayload, User } from '@/types/api';
 
@@ -48,8 +58,8 @@ export function UsersTable({
     return (
       <TableState
         icon={Users}
-        title="Carregando usuários"
-        description="Aguarde enquanto buscamos os usuários cadastrados."
+        title='Carregando usuários'
+        description='Aguarde enquanto buscamos os usuários cadastrados.'
       />
     );
   }
@@ -58,8 +68,8 @@ export function UsersTable({
     return (
       <AdminEmptyState
         icon={Users}
-        title="Nenhum usuário encontrado"
-        description="Ajuste a busca ou o filtro de perfil para localizar um usuário existente."
+        title='Nenhum usuário encontrado'
+        description='Ajuste a busca ou o filtro de perfil para localizar um usuário existente.'
         onReset={onResetFilters}
       />
     );
@@ -67,7 +77,7 @@ export function UsersTable({
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className='overflow-x-auto'>
         <Table>
           <TableHeader>
             <TableRow>
@@ -76,13 +86,16 @@ export function UsersTable({
               <TableHead>Perfil</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atualizado em</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className='text-right'>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
-                <TableCell className="font-medium">{user.name}</TableCell>
+              <TableRow
+                key={user.id}
+                className='transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+              >
+                <TableCell className='font-medium'>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <RoleBadge role={user.role} />
@@ -90,16 +103,20 @@ export function UsersTable({
                 <TableCell>{formatDateTime(user.createdAt)}</TableCell>
                 <TableCell>{formatDateTime(user.updatedAt)}</TableCell>
                 <TableCell>
-                  <div className="flex justify-end gap-1.5">
+                  <div className='flex justify-end gap-1.5'>
                     <EditUserDialog
                       user={user}
                       isSubmitting={isUpdating}
-                      onSubmit={(values, setFieldError) => onUpdate(user, values, setFieldError)}
+                      onSubmit={(values, setFieldError) =>
+                        onUpdate(user, values, setFieldError)
+                      }
                     />
                     <ChangeRoleDialog
                       user={user}
                       isSubmitting={isChangingRole}
-                      onSubmit={(values, setFieldError) => onChangeRole(user, values, setFieldError)}
+                      onSubmit={(values, setFieldError) =>
+                        onChangeRole(user, values, setFieldError)
+                      }
                     />
                     <ConfirmUserDeletion
                       user={user}
@@ -131,7 +148,7 @@ function ConfirmUserDeletion({
     <ConfirmIconButton
       icon={Trash2}
       label={`Excluir usuário ${user.name}`}
-      title="Excluir usuário?"
+      title='Excluir usuário?'
       description={`O usuário ${user.name} será removido permanentemente.`}
       confirmLabel={disabled ? 'Excluindo...' : 'Excluir'}
       onConfirm={onConfirm}

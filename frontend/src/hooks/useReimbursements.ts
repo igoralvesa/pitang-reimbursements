@@ -1,31 +1,42 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { reimbursementService } from '@/services/reimbursementService';
-import type { CreateReimbursementPayload, UpdateReimbursementPayload } from '@/types/api';
+import type {
+  CreateReimbursementPayload,
+  GetReimbursementsParams,
+  UpdateReimbursementPayload,
+} from '@/types/api';
 
 type UpdateReimbursementVariables = {
   id: string;
   payload: UpdateReimbursementPayload;
 };
 
-export function useReimbursements() {
+type QueryOptions = {
+  enabled?: boolean;
+};
+
+export function useReimbursements(params?: GetReimbursementsParams, options?: QueryOptions) {
   return useQuery({
-    queryKey: queryKeys.reimbursements.lists(),
-    queryFn: reimbursementService.listReimbursements,
+    queryKey: queryKeys.reimbursements.lists(params),
+    queryFn: () => reimbursementService.listReimbursements(params),
+    enabled: options?.enabled,
   });
 }
 
-export function useReimbursement(id: string) {
+export function useReimbursement(id?: string) {
   return useQuery({
-    queryKey: queryKeys.reimbursements.detail(id),
-    queryFn: () => reimbursementService.getReimbursement(id),
+    queryKey: queryKeys.reimbursements.detail(id ?? ''),
+    queryFn: () => reimbursementService.getReimbursement(id ?? ''),
+    enabled: Boolean(id),
   });
 }
 
-export function useReimbursementHistory(id: string) {
+export function useReimbursementHistory(id?: string) {
   return useQuery({
-    queryKey: queryKeys.reimbursements.history(id),
-    queryFn: () => reimbursementService.getReimbursementHistory(id),
+    queryKey: queryKeys.reimbursements.history(id ?? ''),
+    queryFn: () => reimbursementService.getReimbursementHistory(id ?? ''),
+    enabled: Boolean(id),
   });
 }
 

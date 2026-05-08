@@ -1,5 +1,7 @@
 import z from 'zod';
 
+import { ReimbursementStatus } from '../../generated/prisma/client';
+
 export const createReimbursementSchema = z.object({
   amount: z.coerce.number().positive('Valor deve ser maior que zero'),
   categoryId: z.uuid('Categoria inválida'),
@@ -25,8 +27,30 @@ export const rejectReimbursementSchema = z.object({
   rejectionReason: z.string().trim().min(1, 'Justificativa é obrigatória'),
 });
 
+export const getReimbursementsQuerySchema = z.object({
+  categoryId: z.uuid('Categoria inválida').optional(),
+  collaboratorId: z.uuid('Colaborador inválido').optional(),
+  limit: z.coerce
+    .number()
+    .int('Limite deve ser um número inteiro')
+    .positive('Limite deve ser maior que zero')
+    .max(100, 'Limite deve ser no máximo 100')
+    .default(10),
+  page: z.coerce
+    .number()
+    .int('Página deve ser um número inteiro')
+    .positive('Página deve ser maior que zero')
+    .default(1),
+  sortBy: z.enum(['createdAt', 'expenseDate', 'amount']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  status: z.enum(ReimbursementStatus).optional(),
+});
+
 export type CreateReimbursementInput = z.infer<
   typeof createReimbursementSchema
+>;
+export type GetReimbursementsQueryInput = z.infer<
+  typeof getReimbursementsQuerySchema
 >;
 export type UpdateReimbursementInput = z.infer<
   typeof updateReimbursementSchema

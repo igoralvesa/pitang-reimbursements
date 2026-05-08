@@ -60,11 +60,17 @@ export async function createCategoryFixture({
 }
 
 export async function createReimbursementFixture({
+  amount = 50,
   categoryId,
+  createdAt,
+  expenseDate = new Date('2026-05-01T00:00:00.000Z'),
   requesterId,
   status = ReimbursementStatus.DRAFT,
 }: {
+  amount?: number;
   categoryId?: string;
+  createdAt?: Date;
+  expenseDate?: Date;
   requesterId?: string;
   status?: ReimbursementStatus;
 } = {}) {
@@ -77,10 +83,11 @@ export async function createReimbursementFixture({
 
   return prisma.reimbursementRequest.create({
     data: {
-      amount: 50,
+      amount,
       categoryId: categoryId ?? category!.id,
+      createdAt,
       description: 'Táxi para reunião',
-      expenseDate: new Date('2026-05-01T00:00:00.000Z'),
+      expenseDate,
       requesterId: requesterId ?? requester!.id,
       status,
     },

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { type UserEditFormValues } from '@/components/User/userManagementTypes';
+import { type UserEditFormValues } from '@/components/user/userManagementTypes';
 import { updateUserSchema } from '@/schemas/userSchema';
 import type { User } from '@/types/api';
 
@@ -56,7 +56,10 @@ export function EditUserDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <span>
-          <TooltipIconButton icon={Pencil} label={`Editar usuário ${user.name}`} />
+          <TooltipIconButton
+            icon={Pencil}
+            label={`Editar usuário ${user.name}`}
+          />
         </span>
       </DialogTrigger>
       <DialogContent>
@@ -66,19 +69,31 @@ export function EditUserDialog({
             Informe os dados básicos do usuário para acesso ao sistema.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={submit} className='space-y-4'>
+          <div className='space-y-2'>
             <Label htmlFor={`user-name-${user.id}`}>Nome</Label>
             <Input id={`user-name-${user.id}`} {...register('name')} />
-            {errors.name ? <p className="text-xs text-red-600">{errors.name.message}</p> : null}
+            {errors.name ? (
+              <p className='text-xs text-red-600'>{errors.name.message}</p>
+            ) : null}
           </div>
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label htmlFor={`user-email-${user.id}`}>Email</Label>
-            <Input id={`user-email-${user.id}`} type="email" {...register('email')} />
-            {errors.email ? <p className="text-xs text-red-600">{errors.email.message}</p> : null}
+            <Input
+              id={`user-email-${user.id}`}
+              type='email'
+              {...register('email')}
+            />
+            {errors.email ? (
+              <p className='text-xs text-red-600'>{errors.email.message}</p>
+            ) : null}
           </div>
           <DialogFooter>
-            <Button type="submit" className="bg-orange-600 hover:bg-orange-700" disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='bg-orange-600 hover:bg-orange-700'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>

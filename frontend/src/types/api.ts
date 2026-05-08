@@ -93,6 +93,10 @@ export type PaginatedResponse<T> = {
   meta: PaginationMeta;
 };
 
+export type ReimbursementSortBy = 'createdAt' | 'expenseDate' | 'amount';
+
+export type SortOrder = 'asc' | 'desc';
+
 export type GetUsersParams = {
   page?: number;
   limit?: number;
@@ -104,6 +108,16 @@ export type GetCategoriesParams = {
   page?: number;
   limit?: number;
   name?: string;
+};
+
+export type GetReimbursementsParams = {
+  page?: number;
+  limit?: number;
+  collaboratorId?: string;
+  categoryId?: string;
+  status?: RequestStatus | '';
+  sortBy?: ReimbursementSortBy;
+  sortOrder?: SortOrder;
 };
 
 export type LoginPayload = {

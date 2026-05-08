@@ -18,10 +18,15 @@ type PromoteUserVariables = {
   payload: PromoteUserPayload;
 };
 
-export function useUsers(params?: GetUsersParams) {
+type QueryOptions = {
+  enabled?: boolean;
+};
+
+export function useUsers(params?: GetUsersParams, options?: QueryOptions) {
   return useQuery({
     queryKey: queryKeys.users.lists(params),
     queryFn: () => userService.listUsers(params),
+    enabled: options?.enabled,
   });
 }
 

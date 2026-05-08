@@ -2,15 +2,24 @@ import { httpClient } from '@/services/httpClient';
 import type {
   Attachment,
   CreateReimbursementPayload,
+  GetReimbursementsParams,
   HistoryEntry,
+  PaginatedResponse,
   ReimbursementRequest,
   RejectReimbursementPayload,
   UpdateReimbursementPayload,
 } from '@/types/api';
 
 export const reimbursementService = {
-  async listReimbursements(): Promise<ReimbursementRequest[]> {
-    const { data } = await httpClient.get<ReimbursementRequest[]>('/reimbursements');
+  async listReimbursements(
+    params?: GetReimbursementsParams,
+  ): Promise<PaginatedResponse<ReimbursementRequest>> {
+    const { data } = await httpClient.get<PaginatedResponse<ReimbursementRequest>>(
+      '/reimbursements',
+      {
+        params: normalizeReimbursementParams(params),
+      },
+    );
 
     return data;
   },
@@ -97,3 +106,20 @@ export const reimbursementService = {
     return data;
   },
 };
+
+function normalizeReimbursementParams(params?: GetReimbursementsParams) {
+  if (!params) {
+    return undefined;
+  }
+
+  const normalized: GetReimbursementsParams = {
+    ...params,
+    categoryId: params.categoryId?.trim() || undefined,
+    collaboratorId: params.collaboratorId?.trim() || undefined,
+    status: params.status || undefined,
+  };
+
+  return Object.fromEntries(
+    Object.entries(normalized).filter(([, value]) => value !== undefined),
+  ) as GetReimbursementsParams;
+}
