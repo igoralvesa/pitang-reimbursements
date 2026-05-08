@@ -32,10 +32,29 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/reimbursements_db
       JWT_SECRET: dev-secret-change-me
       HTTP_PORT: 3333
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-dev-key}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-dev-secret}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-dev-cloud}
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
     command: sh -c "bun install && bunx prisma migrate deploy && bunx prisma generate && bun run seed && bun run dev"
+
+  frontend:
+    image: oven/bun:1
+    container_name: reimbursement-frontend
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      - backend
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_URL: http://localhost:3333
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: sh -c "bun install && bun run dev -- --host 0.0.0.0"
 
   prisma-studio:
     image: oven/bun:1
@@ -57,4 +76,5 @@ services:
 volumes:
   postgres_data:
   backend_node_modules:
+  frontend_node_modules:
   prisma_studio_node_modules:

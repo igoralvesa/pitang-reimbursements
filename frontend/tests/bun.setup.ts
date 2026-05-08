@@ -60,6 +60,71 @@ class ResizeObserverMock {
 globalThis.ResizeObserver = ResizeObserverMock;
 globalThis.TextEncoder = TextEncoder;
 globalThis.TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
+globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+
+const pointerCaptureElementPrototypes = [
+  dom.window.Element.prototype,
+  dom.window.HTMLElement.prototype,
+  dom.window.SVGElement.prototype,
+];
+
+for (const prototype of pointerCaptureElementPrototypes) {
+  if (!prototype.hasPointerCapture) {
+    prototype.hasPointerCapture = () => false;
+  }
+
+  if (!prototype.releasePointerCapture) {
+    prototype.releasePointerCapture = () => {};
+  }
+
+  if (!prototype.setPointerCapture) {
+    prototype.setPointerCapture = () => {};
+  }
+}
+
+if (!dom.window.Element.prototype.scrollIntoView) {
+  dom.window.Element.prototype.scrollIntoView = () => {};
+}
+
+const requestAnimationFrameMock = (callback: FrameRequestCallback) =>
+  window.setTimeout(() => callback(Date.now()), 0);
+const cancelAnimationFrameMock = (handle: number) => window.clearTimeout(handle);
+
+Object.defineProperty(globalThis, 'requestAnimationFrame', {
+  configurable: true,
+  value: requestAnimationFrameMock,
+});
+
+Object.defineProperty(globalThis, 'cancelAnimationFrame', {
+  configurable: true,
+  value: cancelAnimationFrameMock,
+});
+
+Object.defineProperty(window, 'requestAnimationFrame', {
+  configurable: true,
+  value: requestAnimationFrameMock,
+});
+
+Object.defineProperty(window, 'cancelAnimationFrame', {
+  configurable: true,
+  value: cancelAnimationFrameMock,
+});
+
+const originalConsoleError = console.error.bind(console);
+
+console.error = (...args: unknown[]) => {
+  const firstArg = args[0];
+
+  if (
+    typeof firstArg === 'string' &&
+    (firstArg.includes('was not wrapped in act') ||
+      firstArg.includes('A component suspended inside an `act` scope'))
+  ) {
+    return;
+  }
+
+  originalConsoleError(...args);
+};
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

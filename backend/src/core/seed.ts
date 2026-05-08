@@ -37,6 +37,22 @@ const defaultCategory = {
   name: 'Transporte',
 } as const;
 
+const seedCategories = [
+  defaultCategory,
+  { active: true, name: 'Alimentação' },
+  { active: true, name: 'Hospedagem' },
+  { active: true, name: 'Combustível' },
+  { active: true, name: 'Estacionamento' },
+  { active: true, name: 'Pedágio' },
+  { active: true, name: 'Material de escritório' },
+  { active: true, name: 'Internet' },
+  { active: true, name: 'Telefone' },
+  { active: true, name: 'Passagens aéreas' },
+  { active: true, name: 'Treinamentos' },
+  { active: true, name: 'Eventos' },
+  { active: true, name: 'Manutenção' },
+] as const;
+
 const defaultReimbursement = {
   amount: 50,
   description: 'Táxi para reunião com cliente',
@@ -79,18 +95,28 @@ export async function seedDefaultData() {
     where: { email: 'colaborador@email.com' },
   });
 
-  const existingCategory = await prisma.category.findFirst({
+  await Promise.all(
+    seedCategories.map(async (seedCategory) => {
+      const existingCategory = await prisma.category.findFirst({
+        where: { name: seedCategory.name },
+      });
+
+      if (existingCategory) {
+        return prisma.category.update({
+          data: { active: seedCategory.active },
+          where: { id: existingCategory.id },
+        });
+      }
+
+      return prisma.category.create({
+        data: seedCategory,
+      });
+    }),
+  );
+
+  const category = await prisma.category.findFirstOrThrow({
     where: { name: defaultCategory.name },
   });
-
-  const category = existingCategory
-    ? await prisma.category.update({
-        data: { active: defaultCategory.active },
-        where: { id: existingCategory.id },
-      })
-    : await prisma.category.create({
-        data: defaultCategory,
-      });
 
   const existingReimbursement = await prisma.reimbursementRequest.findFirst({
     where: {
@@ -130,4 +156,10 @@ export async function seedDefaultData() {
   );
 }
 
-export { defaultCategory, defaultPassword, defaultReimbursement, seedUsers };
+export {
+  defaultCategory,
+  defaultPassword,
+  defaultReimbursement,
+  seedCategories,
+  seedUsers,
+};

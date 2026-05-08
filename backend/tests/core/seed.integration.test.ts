@@ -8,6 +8,7 @@ import { prisma } from '../../src/core/prisma';
 import {
   defaultCategory,
   defaultReimbursement,
+  seedCategories,
   seedDefaultData,
 } from '../../src/core/seed';
 import { Role } from '../../src/types/roles-enum';
@@ -22,7 +23,7 @@ describe('Seed data', () => {
     await disconnectDatabase();
   });
 
-  it('creates default users, category, reimbursement and history', async () => {
+  it('creates default users, categories, reimbursement and history', async () => {
     await seedDefaultData();
 
     const collaborator = await prisma.user.findUnique({
@@ -37,6 +38,24 @@ describe('Seed data', () => {
       role: Role.COLLABORATOR,
     });
     expect(category).toMatchObject(defaultCategory);
+
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+      where: {
+        name: {
+          in: seedCategories.map((seedCategory) => seedCategory.name),
+        },
+      },
+    });
+
+    expect(categories).toHaveLength(seedCategories.length);
+    expect(categories).toEqual(
+      expect.arrayContaining(
+        seedCategories.map((seedCategory) =>
+          expect.objectContaining(seedCategory),
+        ),
+      ),
+    );
 
     const reimbursement = await prisma.reimbursementRequest.findFirst({
       where: {
@@ -66,7 +85,7 @@ describe('Seed data', () => {
     });
   });
 
-  it('does not duplicate default category or reimbursement when run more than once', async () => {
+  it('does not duplicate default categories or reimbursement when run more than once', async () => {
     await seedDefaultData();
     await seedDefaultData();
 
@@ -79,8 +98,16 @@ describe('Seed data', () => {
     const histories = await prisma.reimbursementHistory.findMany({
       where: { action: ReimbursementHistoryAction.CREATED },
     });
+    const seededCategories = await prisma.category.findMany({
+      where: {
+        name: {
+          in: seedCategories.map((seedCategory) => seedCategory.name),
+        },
+      },
+    });
 
     expect(categories).toHaveLength(1);
+    expect(seededCategories).toHaveLength(seedCategories.length);
     expect(reimbursements).toHaveLength(1);
     expect(histories).toHaveLength(1);
   });

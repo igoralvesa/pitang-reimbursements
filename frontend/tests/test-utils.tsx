@@ -16,6 +16,12 @@ import type {
 } from '../src/types/api';
 import type { User, UserRole } from '../src/types/domain';
 
+const jestWithMocked = jest as typeof jest & {
+  mocked?: <T>(source: T) => T;
+};
+
+jestWithMocked.mocked ??= <T,>(source: T) => source;
+
 jest.mock('@/services/httpClient', () => ({
   httpClient: {
     delete: jest.fn(),

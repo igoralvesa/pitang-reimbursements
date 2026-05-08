@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Reimbursement API",
-    "description": "Postman collection for auth, users, categories, and reimbursement routes.",
+    "description": "Coleção Postman atualizada para as rotas implementadas da API de reembolsos. A única rota pública de negócio é POST /auth/login; as demais usam JWT Bearer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -31,7 +31,8 @@
               "host": [
                 "{{baseUrl}}"
               ]
-            }
+            },
+            "description": "Health check simples da aplicação."
           }
         }
       ]
@@ -40,31 +41,18 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Login",
+          "name": "Login - Admin",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var response = {};",
-                  "",
-                  "try {",
-                  "  response = pm.response.json();",
-                  "} catch (error) {",
-                  "  response = {};",
-                  "}",
-                  "",
-                  "var data = response.data || {};",
-                  "var token = response.token || response.accessToken || data.token || data.accessToken;",
-                  "",
-                  "pm.test('Response contains a JWT token', function () {",
-                  "  pm.expect(token, 'token').to.be.a('string').and.not.be.empty;",
+                  "const json = pm.response.json();",
+                  "pm.test('retorna token', function () {",
+                  "  pm.expect(json.token).to.be.a('string').and.not.empty;",
                   "});",
-                  "",
-                  "if (token) {",
-                  "  pm.environment.set('token', token);",
-                  "}"
+                  "if (json.token) pm.environment.set('token', json.token);"
                 ]
               }
             }
@@ -99,7 +87,170 @@
                 "auth",
                 "login"
               ]
+            },
+            "description": "Rota pública. Use para obter token ADMIN."
+          }
+        },
+        {
+          "name": "Login - Colaborador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.environment.set('token', json.token);"
+                ]
+              }
             }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"colaborador@email.com\",\n  \"password\": \"Senha@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Rota pública. Use para obter token COLLABORATOR."
+          }
+        },
+        {
+          "name": "Login - Gestor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.environment.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"gestor@email.com\",\n  \"password\": \"Senha@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Rota pública. Use para obter token MANAGER."
+          }
+        },
+        {
+          "name": "Login - Financeiro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.environment.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"financeiro@email.com\",\n  \"password\": \"Senha@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Rota pública. Use para obter token FINANCE."
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Rota protegida. Retorna o usuário autenticado."
           }
         }
       ]
@@ -108,7 +259,57 @@
       "name": "Users",
       "item": [
         {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10&role=COLLABORATOR",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "role",
+                  "value": "COLLABORATOR",
+                  "description": "Opcional: COLLABORATOR, MANAGER, FINANCE ou ADMIN"
+                },
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Opcional",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Rota protegida. Requer ADMIN."
+          }
+        },
+        {
           "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.environment.set('userId', json.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -120,7 +321,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario Teste\",\n  \"email\": \"usuario@email.com\",\n  \"password\": \"Senha@123\",\n  \"role\": \"COLLABORATOR\"\n}",
+              "raw": "{\n  \"name\": \"Usuário Teste\",\n  \"email\": \"usuario.teste@email.com\",\n  \"password\": \"Senha@123\",\n  \"role\": \"COLLABORATOR\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -136,24 +337,7 @@
                 "users"
               ]
             },
-            "description": "Protected route. Requires ADMIN. Role is optional and defaults to COLLABORATOR."
-          }
-        },
-        {
-          "name": "Get Users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users"
-              ]
-            },
-            "description": "Protected route. Requires ADMIN."
+            "description": "Rota protegida. Requer ADMIN. role é opcional e o padrão é COLLABORATOR."
           }
         },
         {
@@ -171,7 +355,7 @@
                 "{{userId}}"
               ]
             },
-            "description": "Protected route. Requires ADMIN."
+            "description": "Rota protegida. Requer ADMIN."
           }
         },
         {
@@ -187,7 +371,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario Atualizado\",\n  \"email\": \"usuario.atualizado@email.com\",\n  \"password\": \"NovaSenha@123\"\n}",
+              "raw": "{\n  \"name\": \"Usuário Atualizado\",\n  \"email\": \"usuario.atualizado@email.com\",\n  \"password\": \"NovaSenha@123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -204,7 +388,7 @@
                 "{{userId}}"
               ]
             },
-            "description": "Protected route. Requires ADMIN."
+            "description": "Rota protegida. Requer ADMIN. Aceita atualização parcial."
           }
         },
         {
@@ -238,7 +422,7 @@
                 "promote"
               ]
             },
-            "description": "Protected route. Requires ADMIN. Updates only the user role."
+            "description": "Rota protegida. Requer ADMIN. Atualiza somente a role do usuário."
           }
         },
         {
@@ -256,7 +440,7 @@
                 "{{userId}}"
               ]
             },
-            "description": "Protected route. Requires ADMIN."
+            "description": "Rota protegida. Requer ADMIN."
           }
         }
       ]
@@ -265,24 +449,52 @@
       "name": "Categories",
       "item": [
         {
-          "name": "Get Categories",
+          "name": "List Categories",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/categories",
+              "raw": "{{baseUrl}}/categories?page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "categories"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Opcional",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Protected route. Lists only active categories."
+            "description": "Rota protegida. Lista categorias ativas com paginação."
           }
         },
         {
           "name": "Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.environment.set('categoryId', json.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -294,7 +506,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Transport\"\n}",
+              "raw": "{\n  \"name\": \"Alimentação\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -310,7 +522,7 @@
                 "categories"
               ]
             },
-            "description": "Protected route. Requires ADMIN. Do not send active; backend creates with active true."
+            "description": "Rota protegida. Requer ADMIN. A categoria é criada ativa."
           }
         },
         {
@@ -326,7 +538,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Meals\"\n}",
+              "raw": "{\n  \"name\": \"Refeições\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -343,7 +555,7 @@
                 "{{categoryId}}"
               ]
             },
-            "description": "Protected route. Requires ADMIN. Updates category name only."
+            "description": "Rota protegida. Requer ADMIN. Aceita atualização parcial."
           }
         },
         {
@@ -361,7 +573,7 @@
                 "{{categoryId}}"
               ]
             },
-            "description": "Protected route. Requires ADMIN. Soft deletes category by setting active false."
+            "description": "Rota protegida. Requer ADMIN. Desativa a categoria."
           }
         }
       ]
@@ -375,15 +587,53 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/reimbursements",
+              "raw": "{{baseUrl}}/reimbursements?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "reimbursements"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "createdAt, expenseDate ou amount"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "asc ou desc"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Opcional: DRAFT, SUBMITTED, APPROVED, REJECTED, PAID ou CANCELED",
+                  "disabled": true
+                },
+                {
+                  "key": "categoryId",
+                  "value": "",
+                  "description": "Opcional",
+                  "disabled": true
+                },
+                {
+                  "key": "collaboratorId",
+                  "value": "",
+                  "description": "Opcional para ADMIN, MANAGER e FINANCE",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN. Visibility depends on role: collaborator sees own requests; manager sees SUBMITTED; finance sees APPROVED; admin sees all."
+            "description": "Rota protegida. ADMIN vê todos, COLLABORATOR vê próprios, MANAGER vê SUBMITTED/APPROVED/REJECTED e FINANCE vê APPROVED/PAID."
           }
         },
         {
@@ -394,17 +644,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "var response = {};",
-                  "",
-                  "try {",
-                  "  response = pm.response.json();",
-                  "} catch (error) {",
-                  "  response = {};",
-                  "}",
-                  "",
-                  "if (response.id) {",
-                  "  pm.environment.set('reimbursementId', response.id);",
-                  "}"
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.environment.set('reimbursementId', json.id);"
                 ]
               }
             }
@@ -420,7 +661,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"amount\": 125.5,\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Taxi para reunião com cliente\",\n  \"expenseDate\": \"2026-05-01\"\n}",
+              "raw": "{\n  \"amount\": 125.5,\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Táxi para reunião com cliente\",\n  \"expenseDate\": \"2026-05-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -436,7 +677,7 @@
                 "reimbursements"
               ]
             },
-            "description": "Protected route. Requires COLLABORATOR. Creates the request for the authenticated user with initial status DRAFT. Do not send requester/owner/status fields."
+            "description": "Rota protegida. Requer COLLABORATOR. Cria solicitação com status DRAFT e histórico CREATED."
           }
         },
         {
@@ -454,7 +695,7 @@
                 "{{reimbursementId}}"
               ]
             },
-            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN. Visibility depends on role."
+            "description": "Rota protegida. O acesso depende da role e da visibilidade da solicitação."
           }
         },
         {
@@ -470,7 +711,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"amount\": 150,\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Taxi para reunião com cliente - atualizado\",\n  \"expenseDate\": \"2026-05-01\"\n}",
+              "raw": "{\n  \"amount\": 150,\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Táxi para reunião com cliente - atualizado\",\n  \"expenseDate\": \"2026-05-01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -487,7 +728,7 @@
                 "{{reimbursementId}}"
               ]
             },
-            "description": "Protected route. Requires COLLABORATOR. Collaborator can update only their own DRAFT reimbursement. Owner and status cannot be changed here."
+            "description": "Rota protegida. Requer COLLABORATOR. Somente o dono pode editar uma solicitação DRAFT. Gera histórico UPDATED."
           }
         },
         {
@@ -506,7 +747,7 @@
                 "submit"
               ]
             },
-            "description": "Protected route. Requires COLLABORATOR. Collaborator can submit only their own DRAFT reimbursement. Changes status to SUBMITTED and creates history."
+            "description": "Rota protegida. Requer COLLABORATOR. Transição DRAFT -> SUBMITTED e histórico SUBMITTED."
           }
         },
         {
@@ -525,7 +766,7 @@
                 "cancel"
               ]
             },
-            "description": "Protected route. Requires COLLABORATOR. Collaborator can cancel only their own DRAFT reimbursement. Changes status to CANCELED and creates history."
+            "description": "Rota protegida. Requer COLLABORATOR. Transição DRAFT -> CANCELED e histórico CANCELED."
           }
         },
         {
@@ -544,7 +785,7 @@
                 "approve"
               ]
             },
-            "description": "Protected route. Requires MANAGER. Approves only SUBMITTED reimbursements. Changes status to APPROVED and creates history."
+            "description": "Rota protegida. Requer MANAGER. Transição SUBMITTED -> APPROVED e histórico APPROVED."
           }
         },
         {
@@ -578,7 +819,7 @@
                 "reject"
               ]
             },
-            "description": "Protected route. Requires MANAGER. Rejects only SUBMITTED reimbursements. Rejection reason is required and history is created."
+            "description": "Rota protegida. Requer MANAGER. Transição SUBMITTED -> REJECTED, justificativa obrigatória e histórico REJECTED."
           }
         },
         {
@@ -597,7 +838,7 @@
                 "pay"
               ]
             },
-            "description": "Protected route. Requires FINANCE. Marks only APPROVED reimbursements as PAID and creates history."
+            "description": "Rota protegida. Requer FINANCE. Transição APPROVED -> PAID e histórico PAID."
           }
         },
         {
@@ -616,7 +857,7 @@
                 "history"
               ]
             },
-            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN. Returns history fields for request, user, action, timestamp, and observation."
+            "description": "Rota protegida. Retorna trilha de auditoria da solicitação."
           }
         },
         {
@@ -645,11 +886,11 @@
                 "attachments"
               ]
             },
-            "description": "Protected route. Requires COLLABORATOR. Collaborator can upload one PDF file only to their own DRAFT reimbursement. Field name: file. Allowed MIME type: application/pdf. Max size: 5MB."
+            "description": "Rota protegida. Requer COLLABORATOR. Envia um PDF no campo form-data file para solicitação própria em DRAFT. Limite: 5MB."
           }
         },
         {
-          "name": "Get Reimbursement Attachments",
+          "name": "List Reimbursement Attachments",
           "request": {
             "method": "GET",
             "header": [],
@@ -664,7 +905,7 @@
                 "attachments"
               ]
             },
-            "description": "Protected route. Allowed roles: COLLABORATOR, MANAGER, FINANCE, ADMIN."
+            "description": "Rota protegida. Lista anexos da solicitação conforme permissão de acesso."
           }
         }
       ]
