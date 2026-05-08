@@ -81,6 +81,31 @@ export type ApiValidationError = Record<string, { errors: string[] }>;
 
 export type ApiError = { message: string } | ApiValidationError;
 
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
+
+export type GetUsersParams = {
+  page?: number;
+  limit?: number;
+  name?: string;
+  role?: Role | '';
+};
+
+export type GetCategoriesParams = {
+  page?: number;
+  limit?: number;
+  name?: string;
+};
+
 export type LoginPayload = {
   email: string;
   password: string;

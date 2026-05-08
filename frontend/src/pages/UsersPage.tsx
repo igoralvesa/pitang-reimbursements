@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { AdminFilters } from '@/components/admin/AdminFilters';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminTableCard } from '@/components/admin/AdminTableCard';
@@ -21,7 +21,12 @@ import {
   useUsers,
 } from '@/hooks/useUsers';
 import { getApiErrorMessage, getApiFieldErrors } from '@/lib/apiError';
-import type { PromoteUserPayload, Role, User } from '@/types/api';
+import type {
+  PaginationMeta,
+  PromoteUserPayload,
+  Role,
+  User,
+} from '@/types/api';
 
 type RoleFilter = 'ALL' | Role;
 
@@ -33,38 +38,59 @@ const roleFilterLabels: Record<RoleFilter, string> = {
   ADMIN: 'Administradores',
 };
 
-const roleFilterOptions = (Object.keys(roleFilterLabels) as RoleFilter[]).map((role) => ({
-  label: roleFilterLabels[role],
-  value: role,
-}));
+const roleFilterOptions = (Object.keys(roleFilterLabels) as RoleFilter[]).map(
+  (role) => ({
+    label: roleFilterLabels[role],
+    value: role,
+  }),
+);
+
+const DEFAULT_PAGE_SIZE = 10;
+const emptyMeta: PaginationMeta = {
+  limit: DEFAULT_PAGE_SIZE,
+  page: 1,
+  total: 0,
+  totalPages: 0,
+};
 
 export function UsersPage() {
-  const { data: users = [], isError, isLoading } = useUsers();
-  const createUser = useCreateUser();
-  const updateUser = useUpdateUser();
-  const deleteUser = useDeleteUser();
-  const promoteUser = usePromoteUser();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL');
-
-  const filteredUsers = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return users.filter((user) => {
-      const matchesSearch =
-        user.name.toLowerCase().includes(normalizedSearch) ||
-        user.email.toLowerCase().includes(normalizedSearch);
-      const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
-
-      return matchesSearch && matchesRole;
-    });
-  }, [roleFilter, search, users]);
+  const [page, setPage] = useState(1);
+  const limit = DEFAULT_PAGE_SIZE;
+  const {
+    data: usersResponse,
+    isError,
+    isLoading,
+  } = useUsers({
+    limit,
+    name: search,
+    page,
+    role: roleFilter === 'ALL' ? undefined : roleFilter,
+  });
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
+  const promoteUser = usePromoteUser();
+  const users = usersResponse?.data ?? [];
+  const meta = usersResponse?.meta ?? { ...emptyMeta, page, limit };
 
   const resetFilters = () => {
     setSearch('');
     setRoleFilter('ALL');
+    setPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleRoleFilterChange = (value: RoleFilter) => {
+    setRoleFilter(value);
+    setPage(1);
   };
 
   const createUserSubmit = async (
@@ -138,11 +164,11 @@ export function UsersPage() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className='mx-auto max-w-6xl space-y-6'>
         <AdminPageHeader
           icon={Users}
-          title="Gestão de usuários"
-          description="Cadastre usuários e altere perfis de acesso."
+          title='Gestão de usuários'
+          description='Cadastre usuários e altere perfis de acesso.'
           action={
             <CreateUserDialog
               isSubmitting={createUser.isPending}
@@ -153,17 +179,20 @@ export function UsersPage() {
 
         <Feedback message={feedback} />
         <ErrorFeedback message={errorFeedback} />
-        {isError ? <ErrorFeedback message="Não foi possível carregar os usuários." /> : null}
+        {isError ? (
+          <ErrorFeedback message='Não foi possível carregar os usuários.' />
+        ) : null}
 
         <AdminFilters
           searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Buscar por nome ou e-mail"
-          searchLabel="Buscar usuários"
+          onSearchChange={handleSearchChange}
+          searchPlaceholder='Buscar por nome ou e-mail'
+          searchLabel='Buscar usuários'
           filterValue={roleFilter}
-          onFilterChange={setRoleFilter}
-          filterLabel="Filtrar por perfil"
+          onFilterChange={handleRoleFilterChange}
+          filterLabel='Filtrar por perfil'
           filterOptions={roleFilterOptions}
+          isEmpty={users.length === 0 ? true : false}
         />
 
         <AdminTableCard>
@@ -172,11 +201,13 @@ export function UsersPage() {
             isDeleting={deleteUser.isPending}
             isLoading={isLoading}
             isUpdating={updateUser.isPending}
+            meta={meta}
             onChangeRole={changeRoleSubmit}
             onDelete={deleteUserSubmit}
+            onPageChange={setPage}
             onResetFilters={resetFilters}
             onUpdate={updateUserSubmit}
-            users={filteredUsers}
+            users={users}
           />
         </AdminTableCard>
       </div>

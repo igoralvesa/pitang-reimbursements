@@ -1,17 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { categoryService } from '@/services/categoryService';
 import { queryKeys } from '@/lib/queryKeys';
-import type { CreateCategoryPayload, UpdateCategoryPayload } from '@/types/api';
+import type { CreateCategoryPayload, GetCategoriesParams, UpdateCategoryPayload } from '@/types/api';
 
 type UpdateCategoryVariables = {
   id: string;
   payload: UpdateCategoryPayload;
 };
 
-export function useCategories() {
+export function useCategories(params?: GetCategoriesParams) {
   return useQuery({
-    queryKey: queryKeys.categories.lists(),
-    queryFn: categoryService.listCategories,
+    queryKey: queryKeys.categories.lists(params),
+    queryFn: () => categoryService.listCategories(params),
   });
 }
 

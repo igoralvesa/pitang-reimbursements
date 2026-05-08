@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { userService } from '@/services/userService';
-import type { CreateUserPayload, PromoteUserPayload, UpdateUserPayload } from '@/types/api';
+import type {
+  CreateUserPayload,
+  GetUsersParams,
+  PromoteUserPayload,
+  UpdateUserPayload,
+} from '@/types/api';
 
 type UpdateUserVariables = {
   id: string;
@@ -13,10 +18,10 @@ type PromoteUserVariables = {
   payload: PromoteUserPayload;
 };
 
-export function useUsers() {
+export function useUsers(params?: GetUsersParams) {
   return useQuery({
-    queryKey: queryKeys.users.lists(),
-    queryFn: userService.listUsers,
+    queryKey: queryKeys.users.lists(params),
+    queryFn: () => userService.listUsers(params),
   });
 }
 

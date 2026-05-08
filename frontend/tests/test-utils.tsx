@@ -6,8 +6,26 @@ import {
   beforeEach,
   jest,
 } from '@jest/globals';
+import { httpClient } from '@/services/httpClient';
 import { App } from '../src/App';
+import { queryClient } from '../src/lib/queryClient';
 import type { User, UserRole } from '../src/types/domain';
+
+jest.mock('@/services/httpClient', () => ({
+  httpClient: {
+    delete: jest.fn(),
+    get: jest.fn(),
+    interceptors: {
+      request: { use: jest.fn() },
+      response: { use: jest.fn() },
+    },
+    patch: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+  },
+}));
+
+export const mockHttpClient = httpClient;
 
 type LoginSession = {
   token: string;
@@ -95,11 +113,17 @@ export async function login() {
 
 export function setupAppTest() {
   beforeEach(() => {
+    queryClient.clear();
     window.localStorage.clear();
     document.documentElement.classList.remove('dark');
     mockLoginState.isError = false;
     mockLoginState.isPending = false;
     mockLoginMutation.mockClear();
+    jest.mocked(httpClient.delete).mockReset();
+    jest.mocked(httpClient.get).mockReset();
+    jest.mocked(httpClient.patch).mockReset();
+    jest.mocked(httpClient.post).mockReset();
+    jest.mocked(httpClient.put).mockReset();
     mockLoginMutation.mockResolvedValue({
       token: 'token-de-teste',
       user: usersByRole.COLLABORATOR,

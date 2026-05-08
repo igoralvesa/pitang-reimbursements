@@ -3,23 +3,28 @@ import { ConfirmIconButton } from '@/components/admin/AdminActions';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { CategoryDialog, type CategoryFormValues } from '@/components/Category/CategoryDialog';
 import { CategoryStatusBadge } from '@/components/Category/CategoryStatusBadge';
+import { PaginationControls } from '@/components/PaginationControls';
 import { TableState } from '@/components/TableState';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/date';
-import type { Category, CreateCategoryPayload } from '@/types/api';
+import type { Category, CreateCategoryPayload, PaginationMeta } from '@/types/api';
 
 export function CategoryTable({
   categories,
   isLoading,
   isUpdating,
+  meta,
   onInactivate,
+  onPageChange,
   onResetFilters,
   onUpdate,
 }: {
   categories: Category[];
   isLoading: boolean;
   isUpdating: boolean;
+  meta: PaginationMeta;
   onInactivate: (category: Category) => Promise<void>;
+  onPageChange: (page: number) => void;
   onResetFilters: () => void;
   onUpdate: (
     category: Category,
@@ -49,47 +54,50 @@ export function CategoryTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Categoria</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Criada em</TableHead>
-            <TableHead>Atualizada em</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {categories.map((category) => (
-            <TableRow key={category.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
-              <TableCell className="font-medium">{category.name}</TableCell>
-              <TableCell>
-                <CategoryStatusBadge active={category.active} />
-              </TableCell>
-              <TableCell>{formatDateTime(category.createdAt)}</TableCell>
-              <TableCell>{formatDateTime(category.updatedAt)}</TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-1.5">
-                  <CategoryDialog
-                    category={category}
-                    mode="edit"
-                    isSubmitting={isUpdating}
-                    onSubmit={(values, setFieldError) => onUpdate(category, values, setFieldError)}
-                  />
-                  {category.active ? (
-                    <ConfirmCategoryInactivation
-                      category={category}
-                      onConfirm={() => void onInactivate(category)}
-                    />
-                  ) : null}
-                </div>
-              </TableCell>
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Criada em</TableHead>
+              <TableHead>Atualizada em</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => (
+              <TableRow key={category.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+                <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell>
+                  <CategoryStatusBadge active={category.active} />
+                </TableCell>
+                <TableCell>{formatDateTime(category.createdAt)}</TableCell>
+                <TableCell>{formatDateTime(category.updatedAt)}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1.5">
+                    <CategoryDialog
+                      category={category}
+                      mode="edit"
+                      isSubmitting={isUpdating}
+                      onSubmit={(values, setFieldError) => onUpdate(category, values, setFieldError)}
+                    />
+                    {category.active ? (
+                      <ConfirmCategoryInactivation
+                        category={category}
+                        onConfirm={() => void onInactivate(category)}
+                      />
+                    ) : null}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <PaginationControls meta={meta} onPageChange={onPageChange} />
+    </>
   );
 }
 

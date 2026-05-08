@@ -1,14 +1,18 @@
 import { httpClient } from '@/services/httpClient';
 import type {
   CreateUserPayload,
+  GetUsersParams,
+  PaginatedResponse,
   PromoteUserPayload,
   UpdateUserPayload,
   User,
 } from '@/types/api';
 
 export const userService = {
-  async listUsers(): Promise<User[]> {
-    const { data } = await httpClient.get<User[]>('/users');
+  async listUsers(params?: GetUsersParams): Promise<PaginatedResponse<User>> {
+    const { data } = await httpClient.get<PaginatedResponse<User>>('/users', {
+      params: normalizeUsersParams(params),
+    });
 
     return data;
   },
@@ -41,3 +45,11 @@ export const userService = {
     return data;
   },
 };
+
+function normalizeUsersParams(params?: GetUsersParams) {
+  return {
+    ...params,
+    name: params?.name?.trim() || undefined,
+    role: params?.role || undefined,
+  };
+}

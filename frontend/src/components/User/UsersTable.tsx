@@ -1,6 +1,7 @@
 import { Trash2, Users } from 'lucide-react';
 import { ConfirmIconButton } from '@/components/admin/AdminActions';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
+import { PaginationControls } from '@/components/PaginationControls';
 import { RoleBadge } from '@/components/RoleBadge';
 import { TableState } from '@/components/TableState';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,15 +9,17 @@ import { ChangeRoleDialog } from '@/components/User/ChangeRoleDialog';
 import { EditUserDialog } from '@/components/User/EditUserDialog';
 import type { RoleFormValues, UserEditFormValues } from '@/components/User/userManagementTypes';
 import { formatDateTime } from '@/lib/date';
-import type { PromoteUserPayload, User } from '@/types/api';
+import type { PaginationMeta, PromoteUserPayload, User } from '@/types/api';
 
 export function UsersTable({
   isChangingRole,
   isDeleting,
   isLoading,
   isUpdating,
+  meta,
   onChangeRole,
   onDelete,
+  onPageChange,
   onResetFilters,
   onUpdate,
   users,
@@ -25,12 +28,14 @@ export function UsersTable({
   isDeleting: boolean;
   isLoading: boolean;
   isUpdating: boolean;
+  meta: PaginationMeta;
   onChangeRole: (
     user: User,
     values: RoleFormValues,
     setFieldError: (name: keyof PromoteUserPayload, message: string) => void,
   ) => Promise<void>;
   onDelete: (user: User) => Promise<void>;
+  onPageChange: (page: number) => void;
   onResetFilters: () => void;
   onUpdate: (
     user: User,
@@ -61,52 +66,55 @@ export function UsersTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Usuário</TableHead>
-            <TableHead>E-mail</TableHead>
-            <TableHead>Perfil</TableHead>
-            <TableHead>Criado em</TableHead>
-            <TableHead>Atualizado em</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
-              <TableCell className="font-medium">{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <RoleBadge role={user.role} />
-              </TableCell>
-              <TableCell>{formatDateTime(user.createdAt)}</TableCell>
-              <TableCell>{formatDateTime(user.updatedAt)}</TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-1.5">
-                  <EditUserDialog
-                    user={user}
-                    isSubmitting={isUpdating}
-                    onSubmit={(values, setFieldError) => onUpdate(user, values, setFieldError)}
-                  />
-                  <ChangeRoleDialog
-                    user={user}
-                    isSubmitting={isChangingRole}
-                    onSubmit={(values, setFieldError) => onChangeRole(user, values, setFieldError)}
-                  />
-                  <ConfirmUserDeletion
-                    user={user}
-                    disabled={isDeleting}
-                    onConfirm={() => void onDelete(user)}
-                  />
-                </div>
-              </TableCell>
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Usuário</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Perfil</TableHead>
+              <TableHead>Criado em</TableHead>
+              <TableHead>Atualizado em</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <RoleBadge role={user.role} />
+                </TableCell>
+                <TableCell>{formatDateTime(user.createdAt)}</TableCell>
+                <TableCell>{formatDateTime(user.updatedAt)}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1.5">
+                    <EditUserDialog
+                      user={user}
+                      isSubmitting={isUpdating}
+                      onSubmit={(values, setFieldError) => onUpdate(user, values, setFieldError)}
+                    />
+                    <ChangeRoleDialog
+                      user={user}
+                      isSubmitting={isChangingRole}
+                      onSubmit={(values, setFieldError) => onChangeRole(user, values, setFieldError)}
+                    />
+                    <ConfirmUserDeletion
+                      user={user}
+                      disabled={isDeleting}
+                      onConfirm={() => void onDelete(user)}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <PaginationControls meta={meta} onPageChange={onPageChange} />
+    </>
   );
 }
 

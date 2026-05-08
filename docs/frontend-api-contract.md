@@ -89,6 +89,18 @@ type HistoryEntry = {
 type ApiError =
   | { message: string }
   | Record<string, { errors: string[] }>;
+
+type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+type PaginatedResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
 ```
 
 Validation errors usually return `z.treeifyError(error).properties`, for
@@ -212,15 +224,23 @@ are illustrative; shape and enum values are the important part.
 ### GET /categories success
 
 ```json
-[
-  {
-    "id": "00000000-0000-0000-0000-000000000010",
-    "name": "Transporte",
-    "active": true,
-    "createdAt": "2026-05-01T00:00:00.000Z",
-    "updatedAt": "2026-05-01T00:00:00.000Z"
+{
+  "data": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "name": "Transporte",
+      "active": true,
+      "createdAt": "2026-05-01T00:00:00.000Z",
+      "updatedAt": "2026-05-01T00:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
   }
-]
+}
 ```
 
 ### POST /reimbursements success
@@ -381,15 +401,49 @@ success envelope.
 - Authentication required: yes.
 - Allowed roles: `ADMIN`.
 - Request params: none.
-- Query params: none.
+- Query params:
+  - `page?: number`, default `1`, positive integer.
+  - `limit?: number`, default `10`, positive integer, max `100`.
+  - `name?: string`, case-insensitive partial match on user name.
+  - `role?: Role`, exact backend enum match.
 - Request body: none.
-- Validation rules: none.
-- Success response: `200 User[]`, no `passwordHash`.
-- Possible error responses: `401`, `403`.
-- Important business rules: no pagination/filtering.
-- Frontend notes: admin-only user management list.
+- Validation rules: query params are validated with Zod; numeric params are
+  coerced because query params arrive as strings.
+- Success response: `200 PaginatedResponse<User>`, no `passwordHash`.
+- Possible error responses: `400` Zod field errors, `401`, `403`.
+- Important business rules: filtering happens before pagination; results are
+  ordered by `name` ascending.
+- Frontend notes: send user management search, role, page, and limit as query
+  params.
 - Source: `backend/src/http/routes/user.router.ts`,
   `backend/src/http/controllers/users/get-users.controller.ts`.
+
+Example:
+
+```http
+GET /users?page=1&limit=10&name=ana&role=COLLABORATOR
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Ana Carvalho",
+      "email": "ana@email.com",
+      "role": "COLLABORATOR",
+      "createdAt": "2026-05-01T00:00:00.000Z",
+      "updatedAt": "2026-05-01T00:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
 
 ### POST /users
 
@@ -487,15 +541,46 @@ success envelope.
   category routes.
 - Allowed roles: any authenticated role; no role middleware on this route.
 - Request params: none.
-- Query params: none.
+- Query params:
+  - `page?: number`, default `1`, positive integer.
+  - `limit?: number`, default `10`, positive integer, max `100`.
+  - `name?: string`, case-insensitive partial match on category name.
 - Request body: none.
-- Validation rules: none.
-- Success response: `200 Category[]`, ordered by `name` ascending, only
-  `active: true`.
-- Possible error responses: `401`.
-- Important business rules: inactive categories are hidden.
-- Frontend notes: use for reimbursement forms.
+- Validation rules: query params are validated with Zod; numeric params are
+  coerced because query params arrive as strings.
+- Success response: `200 PaginatedResponse<Category>`, ordered by `name`
+  ascending, only `active: true`.
+- Possible error responses: `400` Zod field errors, `401`.
+- Important business rules: inactive categories are hidden; filtering happens
+  before pagination.
+- Frontend notes: send category search, page, and limit as query params.
 - Source: `backend/src/http/controllers/categories/get-categories.controller.ts`.
+
+Example:
+
+```http
+GET /categories?page=1&limit=10&name=trans
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "name": "Transporte",
+      "active": true,
+      "createdAt": "2026-05-01T00:00:00.000Z",
+      "updatedAt": "2026-05-01T00:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
 
 ### POST /categories
 

@@ -1,5 +1,5 @@
 import { Tags } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { AdminFilters } from '@/components/admin/AdminFilters';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminTableCard } from '@/components/admin/AdminTableCard';
@@ -18,43 +18,49 @@ import {
   useUpdateCategory,
 } from '@/hooks/useCategories';
 import { getApiErrorMessage, getApiFieldErrors } from '@/lib/apiError';
-import type { Category, CreateCategoryPayload } from '@/types/api';
+import type {
+  Category,
+  CreateCategoryPayload,
+  PaginationMeta,
+} from '@/types/api';
 
-type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
-
-const statusFilterOptions: Array<{ label: string; value: StatusFilter }> = [
-  { label: 'Todas', value: 'ALL' },
-  { label: 'Ativas', value: 'ACTIVE' },
-  { label: 'Inativas', value: 'INACTIVE' },
-];
+const DEFAULT_PAGE_SIZE = 10;
+const emptyMeta: PaginationMeta = {
+  limit: DEFAULT_PAGE_SIZE,
+  page: 1,
+  total: 0,
+  totalPages: 0,
+};
 
 export function CategoriesPage() {
-  const { data: categories = [], isError, isLoading } = useCategories();
-  const createCategory = useCreateCategory();
-  const updateCategory = useUpdateCategory();
-  const deleteCategory = useDeleteCategory();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
-
-  const filteredCategories = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return categories.filter((category) => {
-      const matchesSearch = category.name.toLowerCase().includes(normalizedSearch);
-      const matchesStatus =
-        statusFilter === 'ALL' ||
-        (statusFilter === 'ACTIVE' && category.active) ||
-        (statusFilter === 'INACTIVE' && !category.active);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [categories, search, statusFilter]);
+  const [page, setPage] = useState(1);
+  const limit = DEFAULT_PAGE_SIZE;
+  const {
+    data: categoriesResponse,
+    isError,
+    isLoading,
+  } = useCategories({
+    limit,
+    name: search,
+    page,
+  });
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
+  const categories = categoriesResponse?.data ?? [];
+  const meta = categoriesResponse?.meta ?? { ...emptyMeta, page, limit };
 
   const resetFilters = () => {
     setSearch('');
-    setStatusFilter('ALL');
+    setPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
   };
 
   const createCategorySubmit = async (
@@ -110,14 +116,14 @@ export function CategoriesPage() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className='mx-auto max-w-6xl space-y-6'>
         <AdminPageHeader
           icon={Tags}
-          title="Gestão de categorias"
-          description="Cadastre e mantenha categorias de reembolso."
+          title='Gestão de categorias'
+          description='Cadastre e mantenha categorias de reembolso.'
           action={
             <CategoryDialog
-              mode="create"
+              mode='create'
               isSubmitting={createCategory.isPending}
               onSubmit={createCategorySubmit}
             />
@@ -126,25 +132,26 @@ export function CategoriesPage() {
 
         <Feedback message={feedback} />
         <ErrorFeedback message={errorFeedback} />
-        {isError ? <ErrorFeedback message="Não foi possível carregar as categorias." /> : null}
+        {isError ? (
+          <ErrorFeedback message='Não foi possível carregar as categorias.' />
+        ) : null}
 
         <AdminFilters
           searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Buscar por categoria"
-          searchLabel="Buscar categorias"
-          filterValue={statusFilter}
-          onFilterChange={setStatusFilter}
-          filterLabel="Filtrar por status"
-          filterOptions={statusFilterOptions}
+          onSearchChange={handleSearchChange}
+          searchPlaceholder='Buscar por categoria'
+          searchLabel='Buscar categorias'
+          isEmpty={categories.length === 0 ? true : false}
         />
 
         <AdminTableCard>
           <CategoryTable
-            categories={filteredCategories}
+            categories={categories}
             isLoading={isLoading}
             isUpdating={updateCategory.isPending}
+            meta={meta}
             onInactivate={inactivateCategory}
+            onPageChange={setPage}
             onResetFilters={resetFilters}
             onUpdate={updateCategorySubmit}
           />

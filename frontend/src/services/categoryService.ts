@@ -1,9 +1,17 @@
 import { httpClient } from '@/services/httpClient';
-import type { Category, CreateCategoryPayload, UpdateCategoryPayload } from '@/types/api';
+import type {
+  Category,
+  CreateCategoryPayload,
+  GetCategoriesParams,
+  PaginatedResponse,
+  UpdateCategoryPayload,
+} from '@/types/api';
 
 export const categoryService = {
-  async listCategories(): Promise<Category[]> {
-    const { data } = await httpClient.get<Category[]>('/categories');
+  async listCategories(params?: GetCategoriesParams): Promise<PaginatedResponse<Category>> {
+    const { data } = await httpClient.get<PaginatedResponse<Category>>('/categories', {
+      params: normalizeCategoriesParams(params),
+    });
 
     return data;
   },
@@ -24,3 +32,10 @@ export const categoryService = {
     await httpClient.delete(`/categories/${id}`);
   },
 };
+
+function normalizeCategoriesParams(params?: GetCategoriesParams) {
+  return {
+    ...params,
+    name: params?.name?.trim() || undefined,
+  };
+}
